@@ -12,6 +12,10 @@ local PlayerName = nil;
 local CharactersList = nil;
 local CharacterSelectedID = -1;
 local SortedItemColumn = 0;
+local ItemsFilter = {};
+ItemsFilter.count = 0;
+ItemsFilter.text = nil;
+ItemsFilter.items = {};
 
 -- Print function based on CTMod (CT_Master.lua)
 function BHPrint(msg, r, g, b, frame)
@@ -178,6 +182,9 @@ function BankHelperOnOpenBankFrame()
     end
   end
 
+  -- Update filtering list
+  BankHelperUpdateItemFilter(nil);
+
   -- DEBUG:
   OpenAllBags(true);
 end -- BankHelperOnOpenBankFrame()
@@ -241,53 +248,87 @@ function BankHelperCharacterDropDownOnLoad(level)
   UIDropDownMenu_SetSelectedID(BankHelperBankItemCharacterDropDown, CharacterSelectedID, nil);
 end
 
-function BankHelperCharacterDropDownOnSelected()
-  local characterKey;
+-- Item Filtering
+function BankHelperUpdateItemFilter(itemNameFilter)
+  local itemIdStr, itemCount, itemName;
+  local pattern;
+  local characterKey = CharactersList[CharacterSelectedID]["key"];
+  local characterBankItems = BanksItems[characterKey]["items"];
 
+  if (itemNameFilter == nil) then
+    if (ItemsFilter.text == nil) then
+      itemNameFilter = "";
+    else
+      itemNameFilter = ItemsFilter.text;
+    end
+  end
+
+  if (itemNameFilter == "") then
+    ItemsFilter.text  = nil;
+    ItemsFilter.count = BanksItems[characterKey]["numItems"];
+    ItemsFilter.items = characterBankItems;
+    BHPrint("Clear filter");
+  else
+    BHPrint("Filtering with \"" .. itemNameFilter .. "\"");
+    ItemsFilter.text = itemNameFilter;
+    ItemsFilter.items = {};
+    ItemsFilter.count = 0;
+    pattern = ".*" .. itemNameFilter .. ".*";
+    for itemIdStr, itemCount in characterBankItems do
+      itemName = BanksItems["items"][itemIdStr]["name"];
+      if (string.find(itemName, pattern)) then
+        ItemsFilter.items[itemIdStr] = itemCount;
+        ItemsFilter.count = ItemsFilter.count + 1;
+      end
+    end
+  end
+
+  -- Update UI:
+  BankHelperOnItemsDisplayedListChanged();
+end
+
+function BankHelperCharacterDropDownOnSelected()
   -- Set the global character selected ID variable
   if (this:GetID() ~= 0) then
     CharacterSelectedID = this:GetID();
   end
-  characterKey = CharactersList[CharacterSelectedID]["key"];
 
+  -- Update item list with the filter
+  BankHelperUpdateItemFilter(nil);
+end
+
+function BankHelperOnItemsDisplayedListChanged()
   -- Change the UI to display the new character
   UIDropDownMenu_SetSelectedID(BankHelperBankItemCharacterDropDown, CharacterSelectedID);
   -- Reset the items scrolling
   FauxScrollFrame_SetOffset(BankHelperBankScrollFrame, 0);
   FauxScrollFrame_Update(BankHelperBankScrollFrame, 0, BANKITEMS_TO_DISPLAY, BANKHELPER_ITEM_SCROLLFRAME_HEIGHT);
   -- Update the values of scrolling bar
-  FauxScrollFrame_Update(BankHelperBankScrollFrame, BanksItems[characterKey]["numItems"], BANKITEMS_TO_DISPLAY, BANKHELPER_ITEM_SCROLLFRAME_HEIGHT);
+  FauxScrollFrame_Update(BankHelperBankScrollFrame, ItemsFilter.count, BANKITEMS_TO_DISPLAY, BANKHELPER_ITEM_SCROLLFRAME_HEIGHT);
   -- Update displayed bank items
   BankHelperPopulateBankList();
 end
 
 function BankHelperPopulateBankList()
-  local characterKey = CharactersList[CharacterSelectedID]["key"];
-  local characterBankItems = BanksItems[characterKey]["items"];
-  local numItems = BanksItems[characterKey]["numItems"];
   local numButtons = 0;
   local itemsCount = 1;
   local itemsOffset = FauxScrollFrame_GetOffset(BankHelperBankScrollFrame);
-  if (numItems == nil) then
-    BHPrint("Warning: no item found!");
-    numItems = 0;
-  end
 
-  if (numItems == 0) then
+  if (ItemsFilter.count == 0) then
     return;
   end
 
-  if (numItems > BANKITEMS_TO_DISPLAY) then
+  if (ItemsFilter.count > BANKITEMS_TO_DISPLAY) then
     numButtons = BANKITEMS_TO_DISPLAY;
   else
-    numButtons = numItems;
+    numButtons = ItemsFilter.count;
     -- Hide buttons if there is less items type:
-    for i = (numItems + 1), BANKITEMS_TO_DISPLAY, 1 do
+    for i = (ItemsFilter.count + 1), BANKITEMS_TO_DISPLAY, 1 do
       getglobal("BankHelperBankItemButton" .. i):Hide();
     end
   end
 
-  for itemIdStr, itemCount in characterBankItems do
+  for itemIdStr, itemCount in ItemsFilter.items do
     local itemName, itemLevel, itemTexture, itemColor, itemQuality;
     local buttonIndex = itemsCount - itemsOffset;
 
@@ -297,12 +338,14 @@ function BankHelperPopulateBankList()
       itemLevel = BanksItems["items"][itemIdStr]["level"];
       itemTexture = BanksItems["items"][itemIdStr]["texture"];
       itemQuality = BanksItems["items"][itemIdStr]["quality"];
+
       if (not itemQuality) then
         BHPrint("Error on item " .. itemIdStr .. " Quality is nil");
+        itemColor = "";
+      else
+        _, _, _, itemColor = GetItemQualityColor(itemQuality);
+        itemName = itemColor .. itemName;
       end
-
-      _, _, _, itemColor = GetItemQualityColor(itemQuality);
-      itemName = itemColor .. itemName;
 
       if (not itemLevel) then
         itemLevel = 0;
@@ -385,7 +428,7 @@ function BankHelperOnInboxUpdate()
       BHPrint(string.format("  Money: %d", money));
     end
     if (hasItem) then
-      local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i, itemIndex)
+      local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i, itemIndex);
       BHPrint(string.format("  Item: [%s]x%d", itemName, itemCount));
     end
   end

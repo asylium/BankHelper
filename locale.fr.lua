@@ -1,6 +1,11 @@
 -- Global UI string - fr
 if (GetLocale() == "frFR") then
-  BH_UI_TITLE = "Bank Helper - Aide à la banque de guilde";
+  BH_UI_TITLE = "Bank Helper (fr)";
+  BH_UI_ITEMFILTER = "Filtre:";
+  -- Key binding
+  BINDING_NAME_BH_UITOGGLE = "Afficher/Masquer BankHelper";
+  BINDING_HEADER_BH_UIBINDS= "Bank Helper";
+  -- Item quality
   BH_QUALITY = {};
   BH_QUALITY[0] = "Médiocre";
   BH_QUALITY[1] = "Classique";

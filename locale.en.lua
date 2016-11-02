@@ -1,5 +1,6 @@
 -- Global UI string
 BH_UI_TITLE = "Bank Helper";
+BH_UI_ITEMFILTER = "Filter:";
 -- Key binding
 BINDING_NAME_BH_UITOGGLE = "Toggle Bank Helper UI";
 BINDING_HEADER_BH_UIBINDS= "Bank Helper";

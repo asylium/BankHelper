@@ -167,6 +167,8 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
             </Offset>
           </Anchor>
         </Anchors> -->
+
+        <!-- Character selection -->
         <Frames>
           <Frame name="BankHelperBankItemCharacterDropDown" inherits="UIDropDownMenuTemplate" id="0">
             <Anchors>
@@ -182,6 +184,110 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </OnShow>
             </Scripts>
           </Frame>
+
+          <!-- Filter part -->
+          <Frame name="BankHelperItemFilterFrameLabel">
+            <Anchors>
+              <Anchor point="LEFT" relativeTo="BankHelperBankItemCharacterDropDown" relativePoint="RIGHT">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Size>
+              <AbsDimension x="48" y="14"/>
+            </Size>
+            <Layers>
+              <Layer level="OVERLAY">
+                <FontString name="BankHelperItemFilterLabel" inherits="GameFontNormal" text="BH_UI_ITEMFILTER">
+<!--                   <Size>
+                    <AbsDimension x="120" y="14"/>
+                  </Size> -->
+                  <Anchors>
+                    <Anchor point="TOPLEFT">
+                      <Offset>
+                        <AbsDimension x="0" y="0"/>
+                      </Offset>
+                    </Anchor>
+                  </Anchors>
+                  <Color r="1" g="1" b="1" a="1"/>
+                </FontString>
+              </Layer>
+            </Layers>
+          </Frame>
+
+          <EditBox name="BankHelperItemFilterText" letters="100" historyLines="0" autoFocus="false">
+            <Size>
+              <AbsDimension x="190" y="20"/>
+            </Size>
+            <Anchors>
+              <Anchor point="LEFT" relativeTo="BankHelperItemFilterFrameLabel" relativePoint="RIGHT">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="BACKGROUND">
+                <Texture name="$parentLeft" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="8" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="TOPLEFT">
+                      <Offset>
+                        <AbsDimension x="-5" y="0"/>
+                      </Offset>
+                    </Anchor>
+                  </Anchors>
+                  <TexCoords left="0" right="0.0625" top="0" bottom="0.625"/>
+                </Texture>
+                <Texture name="$parentRight" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="8" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="RIGHT">
+                      <Offset>
+                        <AbsDimension x="0" y="0"/>
+                      </Offset>
+                    </Anchor>
+                  </Anchors>
+                  <TexCoords left="0.9375" right="1.0" top="0" bottom="0.625"/>
+                </Texture>
+                <Texture name="$parentMiddle" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="10" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentLeft" relativePoint="RIGHT"/>
+                    <Anchor point="RIGHT" relativeTo="$parentRight" relativePoint="LEFT"/>
+                  </Anchors>
+                  <TexCoords left="0.0625" right="0.9375" top="0" bottom="0.625"/>
+                </Texture>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnEnterPressed>
+                this:ClearFocus();
+              </OnEnterPressed>
+              <OnEscapePressed>
+                this:ClearFocus();
+              </OnEscapePressed>
+              <OnTextChanged>
+                BankHelperUpdateItemFilter(this:GetText());
+              </OnTextChanged>
+              <OnEditFocusLost>
+                this:HighlightText(0, 0);
+              </OnEditFocusLost>
+              <OnEditFocusGained>
+                this:HighlightText();
+              </OnEditFocusGained>
+            </Scripts>
+            <FontString inherits="ChatFontNormal"/>
+          </EditBox>
+
+          <!-- Item scroll list part -->
           <ScrollFrame name="BankHelperBankScrollFrame" inherits="FauxScrollFrameTemplate">
             <Size>
               <AbsDimension x="296" y="300"/>
