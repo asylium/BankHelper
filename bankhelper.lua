@@ -314,18 +314,19 @@ function BankHelperPopulateBankList()
   local itemsCount = 1;
   local itemsOffset = FauxScrollFrame_GetOffset(BankHelperBankScrollFrame);
 
-  if (ItemsFilter.count == 0) then
-    return;
-  end
-
   if (ItemsFilter.count > BANKITEMS_TO_DISPLAY) then
     numButtons = BANKITEMS_TO_DISPLAY;
   else
+    local i;
     numButtons = ItemsFilter.count;
     -- Hide buttons if there is less items type:
     for i = (ItemsFilter.count + 1), BANKITEMS_TO_DISPLAY, 1 do
       getglobal("BankHelperBankItemButton" .. i):Hide();
     end
+  end
+
+  if (ItemsFilter.count == 0) then
+    return;
   end
 
   for itemIdStr, itemCount in ItemsFilter.items do
