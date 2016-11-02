@@ -1,0 +1,11 @@
+<Bindings>
+  <Binding name="BH_UITOGGLE" header="BH_UIBINDS" runOnUp="true">
+    if (keystate == "down") then
+      if (BankHelperUIFrame:IsVisible()) then
+        HideUIPanel(BankHelperUIFrame);
+      else
+        ShowUIPanel(BankHelperUIFrame);
+      end
+    end
+  </Binding>
+</Bindings>
