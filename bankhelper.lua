@@ -16,6 +16,7 @@ local ItemsFilter = {};
 ItemsFilter.count = 0;
 ItemsFilter.text = nil;
 ItemsFilter.items = {};
+local MailFrameOpened = 0;
 
 -- Print function based on CTMod (CT_Master.lua)
 function BHPrint(msg, r, g, b, frame)
@@ -51,6 +52,7 @@ function BankHelperOnLoad()
   this:RegisterEvent("BANKFRAME_OPENED");
   this:RegisterEvent("BANKFRAME_CLOSED");
   this:RegisterEvent("MAIL_SHOW");
+  this:RegisterEvent("MAIL_INBOX_UPDATE");
   this:RegisterEvent("MAIL_CLOSED");
   BHPrint("BankHelper loaded");
 end -- BankHelperOnLoad()
@@ -96,8 +98,6 @@ function BankHelperOnEvent(event)
     -- Populate UI:
     UIDropDownMenu_Initialize(BankHelperBankItemCharacterDropDown, BankHelperCharacterDropDownOnLoad);
 
-  elseif (event == "MAIL_INBOX_UPDATE") then
-    BankHelperOnInboxUpdate();
   elseif (event == "BANKFRAME_OPENED") then
     BankHelperOnOpenBankFrame();
   elseif (event == "BANKFRAME_CLOSED") then
@@ -106,6 +106,8 @@ function BankHelperOnEvent(event)
     BankHelperOnOpenMailFrame();
   elseif (event == "MAIL_CLOSED") then
     BankHelperOnCloseMailFrame();
+  elseif (event == "MAIL_INBOX_UPDATE") then
+    BankHelperOnInboxUpdate();
   end
 end -- BankHelperOnEvent()
 
@@ -267,7 +269,6 @@ function BankHelperUpdateItemFilter(itemNameFilter)
     ItemsFilter.text  = nil;
     ItemsFilter.count = BanksItems[characterKey]["numItems"];
     ItemsFilter.items = characterBankItems;
-    BHPrint("Clear filter");
   else
     BHPrint("Filtering with \"" .. itemNameFilter .. "\"");
     ItemsFilter.text = itemNameFilter;
@@ -302,16 +303,15 @@ function BankHelperOnItemsDisplayedListChanged()
   UIDropDownMenu_SetSelectedID(BankHelperBankItemCharacterDropDown, CharacterSelectedID);
   -- Reset the items scrolling
   FauxScrollFrame_SetOffset(BankHelperBankScrollFrame, 0);
-  FauxScrollFrame_Update(BankHelperBankScrollFrame, 0, BANKITEMS_TO_DISPLAY, BANKHELPER_ITEM_SCROLLFRAME_HEIGHT);
-  -- Update the values of scrolling bar
-  FauxScrollFrame_Update(BankHelperBankScrollFrame, ItemsFilter.count, BANKITEMS_TO_DISPLAY, BANKHELPER_ITEM_SCROLLFRAME_HEIGHT);
+  getglobal(BankHelperBankScrollFrame:GetName() .. "ScrollBar"):SetValue(0);
+
   -- Update displayed bank items
   BankHelperPopulateBankList();
 end
 
 function BankHelperPopulateBankList()
   local numButtons = 0;
-  local itemsCount = 1;
+  local itemsIndex = 1;
   local itemsOffset = FauxScrollFrame_GetOffset(BankHelperBankScrollFrame);
 
   if (ItemsFilter.count > BANKITEMS_TO_DISPLAY) then
@@ -325,17 +325,18 @@ function BankHelperPopulateBankList()
     end
   end
 
+  FauxScrollFrame_Update(BankHelperBankScrollFrame, ItemsFilter.count, BANKITEMS_TO_DISPLAY, BANKHELPER_ITEM_SCROLLFRAME_HEIGHT);
+
   if (ItemsFilter.count == 0) then
     return;
   end
 
   for itemIdStr, itemCount in ItemsFilter.items do
     local itemName, itemLevel, itemTexture, itemColor, itemQuality;
-    local buttonIndex = itemsCount - itemsOffset;
+    local buttonIndex = itemsIndex - itemsOffset;
 
-    if (itemsCount > itemsOffset) then
+    if (itemsIndex > itemsOffset) then
       itemName = BanksItems["items"][itemIdStr]["name"];
-      -- itemCount = BanksItems["items"][itemIdStr]["count"];
       itemLevel = BanksItems["items"][itemIdStr]["level"];
       itemTexture = BanksItems["items"][itemIdStr]["texture"];
       itemQuality = BanksItems["items"][itemIdStr]["quality"];
@@ -372,7 +373,7 @@ function BankHelperPopulateBankList()
 
     end
 
-    itemsCount = itemsCount + 1;
+    itemsIndex = itemsIndex + 1;
     if (buttonIndex >= numButtons) then
       break;
     end
@@ -383,22 +384,32 @@ end
 -- Mail parsing
 -- ================================================
 function BankHelperOnOpenMailFrame()
-  -- Unregistered in BankHelperOnInboxUpdate()
-  BankHelperMain:RegisterEvent("MAIL_INBOX_UPDATE");
-  CheckInbox();
+  -- CheckInbox();
+  if (MailFrameOpened == 0) then
+    MailFrameOpened = 1;
+    BHPrint("BankHelperOnOpenMailFrame");
+  else
+    BHPrint("BankHelperOnOpenMailFrame: Mail frame already opened!");
+  end
 end -- BankHelperOnOpenMailFrame()
 
 function BankHelperOnCloseMailFrame()
   local numItems;
-
-  numItems = GetInboxNumItems();
-  BHPrint("BankHelperOnCloseMailFrame: " .. numItems .. " mails left");
+  if (MailFrameOpened == 1) then
+    numItems = GetInboxNumItems();
+    BHPrint("BankHelperOnCloseMailFrame: " .. numItems .. " mails left");
+    MailFrameOpened = 0;
+  else
+    BHPrint("BankHelperOnCloseMailFrame: Mail frame already closed!");
+  end
 end -- BankHelperOnCloseMailFrame()
 
 function BankHelperOnInboxUpdate()
   local numItems;
 
-  BankHelperMain:UnregisterEvent("MAIL_INBOX_UPDATE");
+  if (MailFrameOpened ~= 1) then
+    BHPrint("BankHelperOnInboxUpdate: Mail frame not opened!");
+  end
 
   numItems = GetInboxNumItems();
   if (numItems > 0) then

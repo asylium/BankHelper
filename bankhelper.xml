@@ -160,13 +160,6 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
 
       <!-- Tab bank items -->
       <Frame name="BankHelperBankItemsFrame" setAllPoints="true"> <!-- hidden="false" -->
-<!--         <Anchors>
-          <Anchor point="TOPLEFT">
-            <Offset>
-              <AbsDimension x="0" y="-24"/>
-            </Offset>
-          </Anchor>
-        </Anchors> -->
 
         <!-- Character selection -->
         <Frames>
@@ -200,9 +193,6 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
             <Layers>
               <Layer level="OVERLAY">
                 <FontString name="BankHelperItemFilterLabel" inherits="GameFontNormal" text="BH_UI_ITEMFILTER">
-<!--                   <Size>
-                    <AbsDimension x="120" y="14"/>
-                  </Size> -->
                   <Anchors>
                     <Anchor point="TOPLEFT">
                       <Offset>
@@ -303,6 +293,9 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               <OnVerticalScroll>
                 FauxScrollFrame_OnVerticalScroll(BANKHELPER_ITEM_SCROLLFRAME_HEIGHT, BankHelperPopulateBankList);
               </OnVerticalScroll>
+              <OnLoad>
+                ScrollFrame_OnLoad();
+              </OnLoad>
             </Scripts>
           </ScrollFrame>
           <!-- Items header -->
@@ -370,15 +363,6 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </Anchor>
             </Anchors>
           </Button>
-<!--           <Button name="BankHelperBankItemButton8" inherits="BankHelperBankItemButtonTemplate" id="8">
-            <Anchors>
-              <Anchor point="TOP" relativeTo="BankHelperBankItemButton7" relativePoint="BOTTOM">
-                <Offset>
-                  <AbsDimension x="0" y="0"/>
-                </Offset>
-              </Anchor>
-            </Anchors>
-          </Button> -->
         </Frames>
       </Frame>
     </Frames>
