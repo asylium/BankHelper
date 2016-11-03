@@ -274,10 +274,10 @@ function BankHelperUpdateItemFilter(itemNameFilter)
     ItemsFilter.text = itemNameFilter;
     ItemsFilter.items = {};
     ItemsFilter.count = 0;
-    pattern = ".*" .. itemNameFilter .. ".*";
+    pattern = ".*" .. string.lower(itemNameFilter) .. ".*";
     for itemIdStr, itemCount in characterBankItems do
       itemName = BanksItems["items"][itemIdStr]["name"];
-      if (string.find(itemName, pattern)) then
+      if (string.find(string.lower(itemName), pattern)) then
         ItemsFilter.items[itemIdStr] = itemCount;
         ItemsFilter.count = ItemsFilter.count + 1;
       end
