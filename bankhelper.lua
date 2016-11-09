@@ -423,7 +423,11 @@ function BankHelperOnInboxUpdate()
 
   if (MailFrameOpened == 0) then
     BHPrint("BankHelperOnInboxUpdate: Mail frame not opened!");
+  elseif (MailFrameOpened == 2) then
+    return;
   end
+
+  MailFrameOpened = 2;
 
   numItems = GetInboxNumItems();
   if (numItems > 0) then
@@ -449,17 +453,13 @@ function BankHelperOnInboxUpdate()
       subject = "Aucun sujet";
     end
 
-    if (MailFrameOpened == 1) then
-      BHPrint(string.format("Mail %d/%d: from %s: %s ", i, numItems, sender, subject));
-      if (money > 0) then
-        BHPrint(string.format("  Money: %d", money));
-      end
-      if (hasItem) then
-        local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i, itemIndex);
-        BHPrint(string.format("  Item: [%s]x%d", itemName, itemCount));
-      end
+    BHPrint(string.format("Mail %d/%d: from %s: %s ", i, numItems, sender, subject));
+    if (money > 0) then
+      BHPrint(string.format("  Money: %d", money));
+    end
+    if (hasItem) then
+      local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i, itemIndex);
+      BHPrint(string.format("  Item: [%s]x%d", itemName, itemCount));
     end
   end
-
-  MailFrameOpened = 2;
 end -- BankHelperOnInboxUpdate()
