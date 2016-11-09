@@ -83,6 +83,14 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
         </FontString>
       </Layer>
     </Layers>
+    <Scripts>
+      <OnEnter>
+        BankHelperBankItemButtonOnEnter();
+      </OnEnter>
+      <OnLeave>
+        BankHelperBankItemButtonOnLeave();
+      </OnLeave>
+    </Scripts>
   </Button>
 
   <Frame name="BankHelperUIFrame" parent="UIParent" toplevel="true" enableMouse="true" hidden="true" movable="true" frameStrata="MEDIUM">
@@ -300,7 +308,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
           </ScrollFrame>
           <!-- Items header -->
           <!-- Items's Buttons -->
-          <Button name="BankHelperBankItemButton1" inherits="BankHelperBankItemButtonTemplate" id="1">
+          <Button name="BankHelperBankItemButton1" inherits="BankHelperBankItemButtonTemplate">
             <Anchors>
               <Anchor point="TOPLEFT" relativeTo="BankHelperUIFrame">
                 <Offset>
@@ -309,7 +317,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </Anchor>
             </Anchors>
           </Button>
-          <Button name="BankHelperBankItemButton2" inherits="BankHelperBankItemButtonTemplate" id="2">
+          <Button name="BankHelperBankItemButton2" inherits="BankHelperBankItemButtonTemplate">
             <Anchors>
               <Anchor point="TOP" relativeTo="BankHelperBankItemButton1" relativePoint="BOTTOM">
                 <Offset>
@@ -318,7 +326,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </Anchor>
             </Anchors>
           </Button>
-          <Button name="BankHelperBankItemButton3" inherits="BankHelperBankItemButtonTemplate" id="3">
+          <Button name="BankHelperBankItemButton3" inherits="BankHelperBankItemButtonTemplate">
             <Anchors>
               <Anchor point="TOP" relativeTo="BankHelperBankItemButton2" relativePoint="BOTTOM">
                 <Offset>
@@ -327,7 +335,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </Anchor>
             </Anchors>
           </Button>
-          <Button name="BankHelperBankItemButton4" inherits="BankHelperBankItemButtonTemplate" id="4">
+          <Button name="BankHelperBankItemButton4" inherits="BankHelperBankItemButtonTemplate">
             <Anchors>
               <Anchor point="TOP" relativeTo="BankHelperBankItemButton3" relativePoint="BOTTOM">
                 <Offset>
@@ -336,7 +344,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </Anchor>
             </Anchors>
           </Button>
-          <Button name="BankHelperBankItemButton5" inherits="BankHelperBankItemButtonTemplate" id="5">
+          <Button name="BankHelperBankItemButton5" inherits="BankHelperBankItemButtonTemplate">
             <Anchors>
               <Anchor point="TOP" relativeTo="BankHelperBankItemButton4" relativePoint="BOTTOM">
                 <Offset>
@@ -345,7 +353,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </Anchor>
             </Anchors>
           </Button>
-          <Button name="BankHelperBankItemButton6" inherits="BankHelperBankItemButtonTemplate" id="6">
+          <Button name="BankHelperBankItemButton6" inherits="BankHelperBankItemButtonTemplate">
             <Anchors>
               <Anchor point="TOP" relativeTo="BankHelperBankItemButton5" relativePoint="BOTTOM">
                 <Offset>
@@ -354,7 +362,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </Anchor>
             </Anchors>
           </Button>
-          <Button name="BankHelperBankItemButton7" inherits="BankHelperBankItemButtonTemplate" id="7">
+          <Button name="BankHelperBankItemButton7" inherits="BankHelperBankItemButtonTemplate">
             <Anchors>
               <Anchor point="TOP" relativeTo="BankHelperBankItemButton6" relativePoint="BOTTOM">
                 <Offset>

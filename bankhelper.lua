@@ -112,8 +112,9 @@ function BankHelperOnEvent(event)
 end -- BankHelperOnEvent()
 
 -- ================================================
--- Bank parsing
+-- Bank Items
 -- ================================================
+--  parsing
 function BankHelperAddItem(itemId, itemsCount, count)
   local itemLink, itemName, itemQuality, itemLevel, itemType, itemSubtype, itemTexture;
   local itemIdStr;
@@ -196,9 +197,7 @@ function BankHelperOnCloseBankFrame()
   CloseAllBags();
 end -- BankHelperOnCloseBankFrame()
 
--- ================================================
--- Populate UI
--- ================================================
+-- Sort function
 function BankHelperCharacterSort(a, b)
   return a["name"] < b["name"];
 end
@@ -332,6 +331,7 @@ function BankHelperPopulateBankList()
   end
 
   for itemIdStr, itemCount in ItemsFilter.items do
+    local buttonName;
     local itemName, itemLevel, itemTexture, itemColor, itemQuality;
     local buttonIndex = itemsIndex - itemsOffset;
 
@@ -354,23 +354,24 @@ function BankHelperPopulateBankList()
       end
 
       -- Be sure the button is displayed:
-      getglobal("BankHelperBankItemButton" .. buttonIndex):Show();
+      buttonName = "BankHelperBankItemButton" .. buttonIndex;
+      getglobal(buttonName):Show();
+      getglobal(buttonName):SetID(tonumber(itemIdStr));
 
       if (itemTexture) then
-        local textureName = "BankHelperBankItemButton" .. buttonIndex .. "IconTexture";
+        local textureName = buttonName .. "IconTexture";
         getglobal(textureName):Show();
         getglobal(textureName):SetTexture(itemTexture);
       else
-        local textureName = "BankHelperBankItemButton" .. buttonIndex .. "IconTexture";
+        local textureName = buttonName .. "IconTexture";
         getglobal(textureName):Hide();
         getglobal(textureName):SetTexture(itemTexture);
       end
 
-      getglobal("BankHelperBankItemButton" .. buttonIndex .. "Name"):SetText(itemName);
-      getglobal("BankHelperBankItemButton" .. buttonIndex .. "Quality"):SetText(BH_QUALITY[itemQuality]);
-      getglobal("BankHelperBankItemButton" .. buttonIndex .. "Count"):SetText(itemCount);
-      getglobal("BankHelperBankItemButton" .. buttonIndex .. "Level"):SetText(itemLevel);
-
+      getglobal(buttonName .. "Name"):SetText(itemName);
+      getglobal(buttonName .. "Quality"):SetText(BH_QUALITY[itemQuality]);
+      getglobal(buttonName .. "Count"):SetText(itemCount);
+      getglobal(buttonName .. "Level"):SetText(itemLevel);
     end
 
     itemsIndex = itemsIndex + 1;
@@ -378,6 +379,19 @@ function BankHelperPopulateBankList()
       break;
     end
   end
+end
+
+-- Display item tooltip
+function BankHelperBankItemButtonOnEnter()
+  local itemLink = string.format("item:%d:0:0:0", this:GetID());
+  GameTooltip:SetOwner(this, "ANCHOR_LEFT");
+  GameTooltip:SetHyperlink(itemLink);
+  GameTooltip:Show();
+end
+-- Hide item tooltip
+function BankHelperBankItemButtonOnLeave()
+  GameTooltip:Hide();
+  ResetCursor();
 end
 
 -- ================================================
@@ -436,7 +450,6 @@ function BankHelperOnInboxUpdate()
     end
 
     if (MailFrameOpened == 1) then
-      MailFrameOpened = 2;
       BHPrint(string.format("Mail %d/%d: from %s: %s ", i, numItems, sender, subject));
       if (money > 0) then
         BHPrint(string.format("  Money: %d", money));
@@ -447,4 +460,6 @@ function BankHelperOnInboxUpdate()
       end
     end
   end
+
+  MailFrameOpened = 2;
 end -- BankHelperOnInboxUpdate()
