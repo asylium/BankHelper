@@ -16,6 +16,8 @@ local ItemsFilter = {};
 ItemsFilter.count = 0;
 ItemsFilter.text = nil;
 ItemsFilter.items = {};
+ItemsFilter.sortColumn = "name";
+ItemsFilter.sortAscendant = false;
 local MailFrameOpened = 0;
 
 -- Print function based on CTMod (CT_Master.lua)
@@ -251,6 +253,7 @@ end
 
 -- Item Filtering
 function BankHelperUpdateItemFilter(itemNameFilter)
+  local index = 1;
   local itemIdStr, itemCount, itemName;
   local pattern;
   local characterKey = CharactersList[CharacterSelectedID]["key"];
@@ -267,20 +270,30 @@ function BankHelperUpdateItemFilter(itemNameFilter)
   if (itemNameFilter == "") then
     ItemsFilter.text  = nil;
     ItemsFilter.count = BanksItems[characterKey]["numItems"];
-    ItemsFilter.items = characterBankItems;
+    ItemsFilter.items = {};
+    for itemIdStr, itemCount in characterBankItems do
+      local infos = {};
+      infos.id = itemIdStr;
+      infos.count = itemCount;
+      ItemsFilter.items[index] = infos;
+      index = index + 1;
+    end
   else
     BHPrint("Filtering with \"" .. itemNameFilter .. "\"");
     ItemsFilter.text = itemNameFilter;
     ItemsFilter.items = {};
-    ItemsFilter.count = 0;
     pattern = ".*" .. string.lower(itemNameFilter) .. ".*";
     for itemIdStr, itemCount in characterBankItems do
       itemName = BanksItems["items"][itemIdStr]["name"];
       if (string.find(string.lower(itemName), pattern)) then
-        ItemsFilter.items[itemIdStr] = itemCount;
-        ItemsFilter.count = ItemsFilter.count + 1;
+        local infos = {};
+        infos.id = itemIdStr;
+        infos.count = itemCount;
+        ItemsFilter.items[index] = infos;
+        index = index + 1;
       end
     end
+    ItemsFilter.count = index - 1;
   end
 
   -- Update UI:
@@ -305,12 +318,77 @@ function BankHelperOnItemsDisplayedListChanged()
   getglobal(BankHelperBankScrollFrame:GetName() .. "ScrollBar"):SetValue(0);
 
   -- Update displayed bank items
+  BankHelperOnSortBankItem(nil);
+end
+
+-- Sort items:
+function BankHelperCompareBankItem(a, b)
+  local itemIdStrA, itemIdStrB, cmp;
+
+  itemIdStrA = a.id;
+  itemIdStrB = b.id;
+
+  cmp = false;
+
+  -- For some reason, if I do "cmp = not cmp" for descending sort, there is an LUA error.
+  if (ItemsFilter.sortAscendant) then
+    if (ItemsFilter.sortColumn == "name") then
+      cmp = BanksItems["items"][itemIdStrA]["name"] < BanksItems["items"][itemIdStrB]["name"];
+    elseif (ItemsFilter.sortColumn == "quality") then
+      cmp = BanksItems["items"][itemIdStrA]["quality"] < BanksItems["items"][itemIdStrB]["quality"];
+    elseif (ItemsFilter.sortColumn == "level") then
+      cmp = BanksItems["items"][itemIdStrA]["level"] < BanksItems["items"][itemIdStrB]["level"];
+    elseif (ItemsFilter.sortColumn == "quantity") then
+      cmp = a.count < b.count;
+    else
+      BHPrint("Unknown sort column: " .. ItemsFilter.sortColumn);
+    end
+  else
+    if (ItemsFilter.sortColumn == "name") then
+      cmp = BanksItems["items"][itemIdStrA]["name"] > BanksItems["items"][itemIdStrB]["name"];
+    elseif (ItemsFilter.sortColumn == "quality") then
+      cmp = BanksItems["items"][itemIdStrA]["quality"] > BanksItems["items"][itemIdStrB]["quality"];
+    elseif (ItemsFilter.sortColumn == "level") then
+      cmp = BanksItems["items"][itemIdStrA]["level"] > BanksItems["items"][itemIdStrB]["level"];
+    elseif (ItemsFilter.sortColumn == "quantity") then
+      cmp = a.count > b.count;
+    else
+      BHPrint("Unknown sort column: " .. ItemsFilter.sortColumn);
+    end
+  end
+
+  return cmp;
+end
+function BankHelperOnSortBankItem(sortColumn)
+  if (not sortColumn) then
+    sortColumn = ItemsFilter.sortColumn;
+    ItemsFilter.sortAscendant = not ItemsFilter.sortAscendant;
+  end
+
+  if (sortColumn == "name" or sortColumn == "quality" or sortColumn == "level" or sortColumn == "quantity") then
+    if (sortColumn == ItemsFilter.sortColumn) then
+      ItemsFilter.sortAscendant = not ItemsFilter.sortAscendant;
+    else
+      ItemsFilter.sortAscendant = true;
+    end
+    ItemsFilter.sortColumn = sortColumn;
+
+    BHPrint("BankHelperOnSortBankItem sort by " .. ItemsFilter.sortColumn);
+
+    table.sort(ItemsFilter.items, BankHelperCompareBankItem);
+  else
+    BHPrint("BankHelperOnSortBankItem: invalid column: " .. sortColumn);
+  end
+
   BankHelperPopulateBankList();
 end
 
 function BankHelperPopulateBankList()
+  local itemIdStr, itemCount;
   local numButtons = 0;
   local itemsIndex = 1;
+  local buttonIndex = 1;
+  local itemsCountMax;
   local itemsOffset = FauxScrollFrame_GetOffset(BankHelperBankScrollFrame);
 
   if (ItemsFilter.count > BANKITEMS_TO_DISPLAY) then
@@ -330,54 +408,58 @@ function BankHelperPopulateBankList()
     return;
   end
 
-  for itemIdStr, itemCount in ItemsFilter.items do
+  itemsCountMax = itemsOffset + numButtons;
+  if (itemsCountMax > (itemsOffset + numButtons)) then
+    itemsCountMax = itemsOffset + numButtons - 1;
+  end
+
+  -- BHPrint("itemsOffset=" .. itemsOffset .. " itemsCountMax=" .. itemsCountMax);
+
+  for itemIndex = itemsOffset + 1, itemsCountMax, 1 do
     local buttonName;
     local itemName, itemLevel, itemTexture, itemColor, itemQuality;
-    local buttonIndex = itemsIndex - itemsOffset;
 
-    if (itemsIndex > itemsOffset) then
-      itemName = BanksItems["items"][itemIdStr]["name"];
-      itemLevel = BanksItems["items"][itemIdStr]["level"];
-      itemTexture = BanksItems["items"][itemIdStr]["texture"];
-      itemQuality = BanksItems["items"][itemIdStr]["quality"];
+    -- BHPrint("itemIndex=" .. itemIndex .. " buttonIndex=" .. buttonIndex);
+    itemIdStr = ItemsFilter.items[itemIndex].id;
+    itemCount = ItemsFilter.items[itemIndex].count;
+    itemName = BanksItems["items"][itemIdStr]["name"];
+    itemLevel = BanksItems["items"][itemIdStr]["level"];
+    itemTexture = BanksItems["items"][itemIdStr]["texture"];
+    itemQuality = BanksItems["items"][itemIdStr]["quality"];
 
-      if (not itemQuality) then
-        BHPrint("Error on item " .. itemIdStr .. " Quality is nil");
-        itemColor = "";
-      else
-        _, _, _, itemColor = GetItemQualityColor(itemQuality);
-        itemName = itemColor .. itemName;
-      end
-
-      if (not itemLevel) then
-        itemLevel = 0;
-      end
-
-      -- Be sure the button is displayed:
-      buttonName = "BankHelperBankItemButton" .. buttonIndex;
-      getglobal(buttonName):Show();
-      getglobal(buttonName):SetID(tonumber(itemIdStr));
-
-      if (itemTexture) then
-        local textureName = buttonName .. "IconTexture";
-        getglobal(textureName):Show();
-        getglobal(textureName):SetTexture(itemTexture);
-      else
-        local textureName = buttonName .. "IconTexture";
-        getglobal(textureName):Hide();
-        getglobal(textureName):SetTexture(itemTexture);
-      end
-
-      getglobal(buttonName .. "Name"):SetText(itemName);
-      getglobal(buttonName .. "Quality"):SetText(BH_QUALITY[itemQuality]);
-      getglobal(buttonName .. "Count"):SetText(itemCount);
-      getglobal(buttonName .. "Level"):SetText(itemLevel);
+    if (not itemQuality) then
+      BHPrint("Error on item " .. itemIdStr .. " Quality is nil");
+      itemColor = "";
+    else
+      _, _, _, itemColor = GetItemQualityColor(itemQuality);
+      itemName = itemColor .. itemName;
     end
 
-    itemsIndex = itemsIndex + 1;
-    if (buttonIndex >= numButtons) then
-      break;
+    if (not itemLevel) then
+      itemLevel = 0;
     end
+
+    -- Be sure the button is displayed:
+    buttonName = "BankHelperBankItemButton" .. buttonIndex;
+    getglobal(buttonName):Show();
+    getglobal(buttonName):SetID(tonumber(itemIdStr));
+
+    if (itemTexture) then
+      local textureName = buttonName .. "IconTexture";
+      getglobal(textureName):Show();
+      getglobal(textureName):SetTexture(itemTexture);
+    else
+      local textureName = buttonName .. "IconTexture";
+      getglobal(textureName):Hide();
+      getglobal(textureName):SetTexture(itemTexture);
+    end
+
+    getglobal(buttonName .. "Name"):SetText(itemName);
+    getglobal(buttonName .. "Quality"):SetText(BH_QUALITY[itemQuality]);
+    getglobal(buttonName .. "Count"):SetText(itemCount);
+    getglobal(buttonName .. "Level"):SetText(itemLevel);
+
+    buttonIndex = buttonIndex + 1;
   end
 end
 

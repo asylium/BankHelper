@@ -93,6 +93,76 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
     </Scripts>
   </Button>
 
+  <Button name="BankHelperColumnHeaderTemplate" virtual="true">
+    <!-- Based on WhoFrameColumnHeaderTemplate from FriendsFrame.xml -->
+    <Size>
+      <AbsDimension x="10" y="24"/>
+    </Size>
+    <Layers>
+      <Layer level="BACKGROUND">
+        <Texture name="$parentLeft" file="Interface\FriendsFrame\WhoFrame-ColumnTabs">
+          <Size>
+            <AbsDimension x="5" y="24"/>
+          </Size>
+          <Anchors>
+            <Anchor point="TOPLEFT"/>
+          </Anchors>
+          <TexCoords left="0" right="0.078125" top="0" bottom="0.75"/>
+        </Texture>
+        <Texture name="$parentMiddle" file="Interface\FriendsFrame\WhoFrame-ColumnTabs">
+          <Size>
+            <AbsDimension x="53" y="24"/>
+          </Size>
+          <Anchors>
+            <Anchor point="LEFT" relativeTo="$parentLeft" relativePoint="RIGHT"/>
+          </Anchors>
+          <TexCoords left="0.078125" right="0.90625" top="0" bottom="0.75"/>
+        </Texture>
+        <Texture name="$parentRight" file="Interface\FriendsFrame\WhoFrame-ColumnTabs">
+          <Size>
+            <AbsDimension x="4" y="24"/>
+          </Size>
+          <Anchors>
+            <Anchor point="LEFT" relativeTo="$parentMiddle" relativePoint="RIGHT"/>
+          </Anchors>
+          <TexCoords left="0.90625" right="0.96875" top="0" bottom="0.75"/>
+        </Texture>
+      </Layer>
+    </Layers>
+    <Scripts>
+      <OnClick>
+        if (this.sortColumn) then
+          BankHelperOnSortBankItem(this.sortColumn);
+        end
+        PlaySound("igMainMenuOptionCheckBoxOn");
+      </OnClick>
+    </Scripts>
+    <ButtonText>
+      <Anchors>
+        <Anchor point="LEFT">
+          <Offset>
+            <AbsDimension x="8" y="0"/>
+          </Offset>
+        </Anchor>
+      </Anchors>
+    </ButtonText>
+    <NormalFont inherits="GameFontHighlightSmall"/>
+    <HighlightTexture name="$parentHighlightTexture" file="Interface\PaperDollInfoFrame\UI-Character-Tab-Highlight" alphaMode="ADD">
+      <Anchors>
+        <Anchor point="TOPLEFT" relativeTo="$parentLeft">
+          <Offset>
+            <AbsDimension x="-2" y="5"/>
+          </Offset>
+        </Anchor>
+        <Anchor point="BOTTOMRIGHT" relativeTo="$parentRight">
+          <Offset>
+            <AbsDimension x="2" y="-7"/>
+          </Offset>
+        </Anchor>
+      </Anchors>
+    </HighlightTexture>
+  </Button>
+
   <Frame name="BankHelperUIFrame" parent="UIParent" toplevel="true" enableMouse="true" hidden="true" movable="true" frameStrata="MEDIUM">
     <TitleRegion setAllPoints="true"/>
     <Size>
@@ -285,6 +355,68 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
             <FontString inherits="ChatFontNormal"/>
           </EditBox>
 
+          <!-- BankItem columns header -->
+          <Button name="BankHelperItemsColumnHeader1" inherits="BankHelperColumnHeaderTemplate" text="NAME">
+            <Anchors>
+              <Anchor point="TOPLEFT">
+                <Offset>
+                  <AbsDimension x="20" y="-50"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnLoad>
+                WhoFrameColumn_SetWidth(277);
+                this.sortColumn = "name";
+              </OnLoad>
+            </Scripts>
+          </Button>
+          <Button name="BankHelperItemsColumnHeader2" inherits="BankHelperColumnHeaderTemplate" text="QUALITY">
+            <Anchors>
+              <Anchor point="LEFT" relativeTo="BankHelperItemsColumnHeader1" relativePoint="RIGHT">
+                <Offset>
+                  <AbsDimension x="-2" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnLoad>
+                WhoFrameColumn_SetWidth(120);
+                this.sortColumn = "quality";
+              </OnLoad>
+            </Scripts>
+          </Button>
+          <Button name="BankHelperItemsColumnHeader3" inherits="BankHelperColumnHeaderTemplate" text="BH_UI_LEVEL">
+            <Anchors>
+              <Anchor point="LEFT" relativeTo="BankHelperItemsColumnHeader2" relativePoint="RIGHT">
+                <Offset>
+                  <AbsDimension x="-2" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnLoad>
+                WhoFrameColumn_SetWidth(36);
+                this.sortColumn = "level";
+              </OnLoad>
+            </Scripts>
+          </Button>
+          <Button name="BankHelperItemsColumnHeader4" inherits="BankHelperColumnHeaderTemplate" text="BH_UI_QUANTITY">
+            <Anchors>
+              <Anchor point="LEFT" relativeTo="BankHelperItemsColumnHeader3" relativePoint="RIGHT">
+                <Offset>
+                  <AbsDimension x="-2" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnLoad>
+                WhoFrameColumn_SetWidth(36);
+                this.sortColumn = "quantity";
+              </OnLoad>
+            </Scripts>
+          </Button>
+
           <!-- Item scroll list part -->
           <ScrollFrame name="BankHelperBankScrollFrame" inherits="FauxScrollFrameTemplate">
             <Size>
@@ -376,6 +508,9 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
     </Frames>
 
     <Scripts>
+      <OnShow>
+        BankHelperItemFilterText:SetText("");
+      </OnShow>
     </Scripts>
   </Frame>
 </Ui>

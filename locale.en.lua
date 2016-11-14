@@ -5,6 +5,9 @@ BH_UI_ITEMFILTER = "Filter:";
 BINDING_NAME_BH_UITOGGLE = "Toggle Bank Helper UI";
 BINDING_HEADER_BH_UIBINDS= "Bank Helper";
 
+BH_UI_LEVEL = "Lvl";
+BH_UI_QUANTITY = "Ct";
+
 -- Item quality
 BH_QUALITY = {};
 BH_QUALITY[0] = "Poor";

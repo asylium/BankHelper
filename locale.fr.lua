@@ -5,6 +5,10 @@ if (GetLocale() == "frFR") then
   -- Key binding
   BINDING_NAME_BH_UITOGGLE = "Afficher/Masquer BankHelper";
   BINDING_HEADER_BH_UIBINDS= "Bank Helper";
+
+  BH_UI_LEVEL = "Niv";
+  BH_UI_QUANTITY = "Nb";
+
   -- Item quality
   BH_QUALITY = {};
   BH_QUALITY[0] = "Médiocre";
