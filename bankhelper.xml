@@ -166,7 +166,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
   <Frame name="BankHelperUIFrame" parent="UIParent" toplevel="true" enableMouse="true" hidden="true" movable="true" frameStrata="MEDIUM">
     <TitleRegion setAllPoints="true"/>
     <Size>
-      <AbsDimension x="500" y="350" />
+      <AbsDimension x="500" y="385" />
     </Size>
     <Anchors>
       <Anchor point="CENTER">
@@ -207,9 +207,9 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
             <AbsDimension x="500" y="14"/>
           </Size>
           <Anchors>
-            <Anchor point="CENTER">
+            <Anchor point="TOP">
               <Offset>
-                <AbsDimension x="0" y="168"/>
+                <AbsDimension x="0" y="0"/>
               </Offset>
             </Anchor>
           </Anchors>
@@ -256,7 +256,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
             <Anchors>
               <Anchor point="LEFT" relativeTo="BankHelperBankItemCharacterDropDown" relativePoint="RIGHT">
                 <Offset>
-                  <AbsDimension x="0" y="0"/>
+                  <AbsDimension x="0" y="4"/>
                 </Offset>
               </Anchor>
             </Anchors>
@@ -415,7 +415,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
           <!-- Item scroll list part -->
           <ScrollFrame name="BankHelperBankScrollFrame" inherits="FauxScrollFrameTemplate">
             <Size>
-              <AbsDimension x="296" y="300"/>
+              <AbsDimension x="296" y="280"/>
             </Size>
             <Anchors>
               <Anchor point="TOPRIGHT">
@@ -497,6 +497,86 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
                 </Offset>
               </Anchor>
             </Anchors>
+          </Button>
+        </Frames>
+      </Frame>
+
+       <!-- Tab options -->
+      <Frame name="BankHelperOptionsFrame" setAllPoints="true"> <!-- hidden="false" -->
+      </Frame>
+
+
+      <Frame name="BankHelperTabBarFrame">
+        <Size>
+          <AbsDimension x="150" y="20" />
+        </Size>
+        <Anchors>
+          <Anchor point="BOTTOMLEFT">
+            <Offset>
+              <AbsDimension x="8" y="20"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Frames>
+          <Button name="BankHelperButtonToggleTab1" inherits="TabButtonTemplate" text="BH_UI_TAB_BANK" id="1">
+            <Anchors>
+              <Anchor point="LEFT" relativeTo="BankHelperTabBarFrame">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnLoad>
+                -- PanelTemplates_SelectTab(this);
+                PanelTemplates_TabResize(0);
+                getglobal(this:GetName().."HighlightTexture"):SetWidth(this:GetTextWidth() + 31);
+              </OnLoad>
+              <OnClick>
+                BankHelperOptionsFrame:Hide();
+                BankHelperBankItemsFrame:Show();
+              </OnClick>
+            </Scripts>
+          </Button>
+          <Button name="BankHelperButtonToggleTab2" inherits="TabButtonTemplate" text="BH_UI_TAB_CONTRIB" id="2">
+            <Anchors>
+              <Anchor point="LEFT" relativeTo="BankHelperButtonToggleTab1" relativePoint="RIGHT">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnShow>
+                PanelTemplates_DeselectTab(this);
+              </OnShow>
+              <OnClick>
+                -- FriendsFrame.showFriendsList = nil;
+                -- FriendsFrame_Update();
+                BankHelperBankItemsFrame:Hide();
+                BankHelperOptionsFrame:Hide();
+              </OnClick>
+            </Scripts>
+          </Button>
+          <Button name="BankHelperButtonToggleTab3" inherits="TabButtonTemplate" text="BH_UI_TAB_OPTIONS" id="3">
+            <Anchors>
+              <Anchor point="LEFT" relativeTo="BankHelperButtonToggleTab2" relativePoint="RIGHT">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnShow>
+                PanelTemplates_DeselectTab(this);
+              </OnShow>
+              <OnClick>
+                -- FriendsFrame.showFriendsList = nil;
+                -- FriendsFrame_Update();
+                BankHelperBankItemsFrame:Hide();
+                BankHelperOptionsFrame:Show();
+              </OnClick>
+            </Scripts>
           </Button>
         </Frames>
       </Frame>

@@ -7,6 +7,9 @@ BINDING_HEADER_BH_UIBINDS= "Bank Helper";
 
 BH_UI_LEVEL = "Lvl";
 BH_UI_QUANTITY = "Ct";
+BH_UI_TAB_BANK = "Bank";
+BH_UI_TAB_CONTRIB = "Contrib";
+BH_UI_TAB_OPTIONS = "Options";
 
 -- Item quality
 BH_QUALITY = {};

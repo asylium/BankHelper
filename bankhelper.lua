@@ -521,29 +521,27 @@ function BankHelperOnInboxUpdate()
   for i = 1, numItems, 1 do
     local packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, hasItem, wasRead, wasReturned, textCreated, canReply, isGM = GetInboxHeaderInfo(i);
 
-    if (money == 0 and not hasItem) then
-      -- Ignore this mail.
-      return
-    end
+    if (money > 0 or hasItem) then
+      if (not sender) then
+        sender = "Inconnu";
+      end
+      if (not subject) then
+        subject = "Aucun sujet";
+      end
 
-    if (not sender) then
-      sender = "Inconnu";
-    end
-    if (not subject) then
-      subject = "Aucun sujet";
-    end
-
-    BHPrint(string.format("Mail %d/%d: from %s: %s ", i, numItems, sender, subject));
-    if (money > 0) then
-      BHPrint(string.format("  Money: %d", money));
-    end
-    if (hasItem) then
-      local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i, itemIndex);
-      if (itemName) then
-        BHPrint(string.format("  Item: [%s]x%d", itemName, itemCount));
-      else
-        BHPrint("  Item: [??]x?? -> WoW Error");
+      BHPrint(string.format("Mail %d/%d: from %s: %s ", i, numItems, sender, subject));
+      if (money > 0) then
+        BHPrint(string.format("  Money: %d", money));
+      end
+      if (hasItem) then
+        local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i, itemIndex);
+        if (itemName) then
+          BHPrint(string.format("  Item: [%s]x%d", itemName, itemCount));
+        else
+          BHPrint("  Item: [??]x?? -> WoW Error");
+        end
       end
     end
   end
+  BHPrint("BankHelperOnInboxUpdate: end");
 end -- BankHelperOnInboxUpdate()

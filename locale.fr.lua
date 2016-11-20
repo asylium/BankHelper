@@ -8,6 +8,9 @@ if (GetLocale() == "frFR") then
 
   BH_UI_LEVEL = "Niv";
   BH_UI_QUANTITY = "Nb";
+  BH_UI_TAB_BANK = "Banque";
+  BH_UI_TAB_CONTRIB = "Contrib.";
+  BH_UI_TAB_OPTIONS = "Options";
 
   -- Item quality
   BH_QUALITY = {};
