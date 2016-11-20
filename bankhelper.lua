@@ -17,7 +17,7 @@ ItemsFilter.count = 0;
 ItemsFilter.text = nil;
 ItemsFilter.items = {};
 ItemsFilter.sortColumn = "name";
-ItemsFilter.sortAscendant = false;
+ItemsFilter.sortAscendant = true;
 local MailFrameOpened = 0;
 
 -- Print function based on CTMod (CT_Master.lua)
@@ -96,9 +96,6 @@ function BankHelperOnEvent(event)
       BHPrint(string.format("Player money changed since last connection: %d -> %d (difference = %d)", moneyPrev, money, (money - moneyPrev)));
       BanksItems[PlayerName]["money"] = money;
     end
-
-    -- Populate UI:
-    UIDropDownMenu_Initialize(BankHelperBankItemCharacterDropDown, BankHelperCharacterDropDownOnLoad);
 
   elseif (event == "BANKFRAME_OPENED") then
     BankHelperOnOpenBankFrame();
@@ -188,7 +185,7 @@ function BankHelperOnOpenBankFrame()
   end
 
   -- Update filtering list
-  BankHelperUpdateItemFilter(nil);
+  -- BankHelperUpdateItemFilter(nil);
 
   -- DEBUG:
   OpenAllBags(true);
@@ -218,6 +215,8 @@ function BankHelperCharacterDropDownOnLoad(level)
     UIDropDownMenu_SetWidth(120, BankHelperBankItemCharacterDropDown);
   end
 
+  -- BHPrint("BankHelperCharacterDropDownOnLoad("..level..")");
+
   -- Create the sorted character list
   if (CharactersList == nil) then
     CharactersList = {};
@@ -243,7 +242,7 @@ function BankHelperCharacterDropDownOnLoad(level)
     if (CharacterSelectedID == -1 and info.value == PlayerName) then
       CharacterSelectedID = index;
       info.checked = true;
-      BHPrint("Set CharacterSelectedID=" .. CharacterSelectedID);
+      -- BHPrint("Set CharacterSelectedID=" .. CharacterSelectedID);
     end
     UIDropDownMenu_AddButton(info, 1);
   end
@@ -258,6 +257,8 @@ function BankHelperUpdateItemFilter(itemNameFilter)
   local pattern;
   local characterKey = CharactersList[CharacterSelectedID]["key"];
   local characterBankItems = BanksItems[characterKey]["items"];
+
+  -- BHPrint("BankHelperUpdateItemFilter");
 
   if (itemNameFilter == nil) then
     if (ItemsFilter.text == nil) then
@@ -279,7 +280,7 @@ function BankHelperUpdateItemFilter(itemNameFilter)
       index = index + 1;
     end
   else
-    BHPrint("Filtering with \"" .. itemNameFilter .. "\"");
+    -- BHPrint("Filtering with \"" .. itemNameFilter .. "\"");
     ItemsFilter.text = itemNameFilter;
     ItemsFilter.items = {};
     pattern = ".*" .. string.lower(itemNameFilter) .. ".*";
@@ -306,11 +307,13 @@ function BankHelperCharacterDropDownOnSelected()
     CharacterSelectedID = this:GetID();
   end
 
+  -- BHPrint("BankHelperCharacterDropDownOnSelected");
   -- Update item list with the filter
   BankHelperUpdateItemFilter(nil);
 end
 
 function BankHelperOnItemsDisplayedListChanged()
+  -- BHPrint("BankHelperOnItemsDisplayedListChanged");
   -- Change the UI to display the new character
   UIDropDownMenu_SetSelectedID(BankHelperBankItemCharacterDropDown, CharacterSelectedID);
   -- Reset the items scrolling
@@ -372,12 +375,7 @@ function BankHelperOnSortBankItem(sortColumn)
       ItemsFilter.sortAscendant = true;
     end
     ItemsFilter.sortColumn = sortColumn;
-
-    BHPrint("BankHelperOnSortBankItem sort by " .. ItemsFilter.sortColumn);
-
     table.sort(ItemsFilter.items, BankHelperCompareBankItem);
-  else
-    BHPrint("BankHelperOnSortBankItem: invalid column: " .. sortColumn);
   end
 
   BankHelperPopulateBankList();
@@ -541,7 +539,11 @@ function BankHelperOnInboxUpdate()
     end
     if (hasItem) then
       local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i, itemIndex);
-      BHPrint(string.format("  Item: [%s]x%d", itemName, itemCount));
+      if (itemName) then
+        BHPrint(string.format("  Item: [%s]x%d", itemName, itemCount));
+      else
+        BHPrint("  Item: [??]x?? -> WoW Error");
+      end
     end
   end
 end -- BankHelperOnInboxUpdate()
