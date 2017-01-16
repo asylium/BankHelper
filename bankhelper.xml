@@ -20,7 +20,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
       <AbsDimension x="298" y="37"/>
     </Size>
     <Layers>
-      <Layer level="BORDER">
+      <Layer level="OVERLAY">
         <Texture name="$parentIconTexture">
           <Size>
             <AbsDimension x="37" y="37"/>
@@ -99,7 +99,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
       <AbsDimension x="10" y="24"/>
     </Size>
     <Layers>
-      <Layer level="BACKGROUND">
+      <Layer level="OVERLAY">
         <Texture name="$parentLeft" file="Interface\FriendsFrame\WhoFrame-ColumnTabs">
           <Size>
             <AbsDimension x="5" y="24"/>
@@ -163,10 +163,58 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
     </HighlightTexture>
   </Button>
 
-  <Frame name="BankHelperUIFrame" parent="UIParent" toplevel="true" enableMouse="true" hidden="true" movable="true" frameStrata="MEDIUM">
+  <!-- Mailbox intems -->
+  <Button name="BankHelperMailEntryTemplate" virtual="true">
+    <Size>
+      <AbsDimension x="250" y="37"/>
+    </Size>
+    <Layers>
+      <Layer level="OVERLAY">
+        <Texture name="$parentIconTexture">
+          <Size>
+            <AbsDimension x="37" y="37"/>
+          </Size>
+          <Anchors>
+            <Anchor point="TOPLEFT">
+              <Offset>
+                <AbsDimension x="0" y="0"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </Texture>
+        <FontString name="$parentSender" inherits="GameFontNormalSmall" justifyH="LEFT">
+          <Size>
+            <AbsDimension x="140" y="14"/>
+          </Size>
+          <Anchors>
+            <Anchor point="LEFT" relativeTo="$parentIconTexture" relativePoint="RIGHT">
+              <Offset>
+                <AbsDimension x="6" y="0"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </FontString>
+        <FontString name="$parentSubject" inherits="GameFontHighlightSmall" justifyH="LEFT">
+          <Size>
+            <AbsDimension x="240" y="14"/>
+          </Size>
+          <Anchors>
+            <Anchor point="LEFT" relativeTo="$parentSender" relativePoint="RIGHT">
+              <Offset>
+                <AbsDimension x="0" y="0"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+  </Button>
+
+  <!-- Main UI frame -->
+  <Frame name="BankHelperUIFrame" parent="UIParent" toplevel="true" enableMouse="true" hidden="true" frameStrata="MEDIUM"> <!-- movable="true" -->
     <TitleRegion setAllPoints="true"/>
     <Size>
-      <AbsDimension x="500" y="385" />
+      <AbsDimension x="500" y="400" />
     </Size>
     <Anchors>
       <Anchor point="CENTER">
@@ -501,12 +549,64 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
         </Frames>
       </Frame>
 
-       <!-- Tab options -->
-      <Frame name="BankHelperOptionsFrame" setAllPoints="true"> <!-- hidden="false" -->
+       <!-- Tab contributions (mails) -->
+      <Frame name="BankHelperMailFrame" setAllPoints="true">
+        <Frames>
+          <ScrollFrame name="BankHelperMailScrollFrame" inherits="FauxScrollFrameTemplate">
+            <Size>
+              <AbsDimension x="296" y="280"/>
+            </Size>
+            <Anchors>
+              <Anchor point="TOPRIGHT">
+                <Offset>
+                  <AbsDimension x="-38" y="-45"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnVerticalScroll>
+                FauxScrollFrame_OnVerticalScroll(BANKHELPER_ITEM_SCROLLFRAME_HEIGHT, BankHelperPopulateMailList);
+              </OnVerticalScroll>
+              <OnLoad>
+                ScrollFrame_OnLoad();
+              </OnLoad>
+            </Scripts>
+          </ScrollFrame>
+          <Button name="BankHelperMailEntry1" inherits="BankHelperMailEntryTemplate">
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="BankHelperUIFrame">
+                <Offset>
+                  <AbsDimension x="23" y="-76"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+          </Button>
+          <Button name="BankHelperMailEntry2" inherits="BankHelperMailEntryTemplate">
+            <Anchors>
+              <Anchor point="TOP" relativeTo="BankHelperMailEntry1" relativePoint="BOTTOM">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+          </Button>
+          <Button name="BankHelperMailEntry3" inherits="BankHelperMailEntryTemplate">
+            <Anchors>
+              <Anchor point="TOP" relativeTo="BankHelperMailEntry2" relativePoint="BOTTOM">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+          </Button>
+        </Frames>
       </Frame>
 
+       <!-- Tab options -->
+      <Frame name="BankHelperOptionsFrame" setAllPoints="true">
+      </Frame>
 
-      <Frame name="BankHelperTabBarFrame">
+      <Frame name="BankHelperTabBar">
         <Size>
           <AbsDimension x="150" y="20" />
         </Size>
@@ -518,9 +618,9 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
           </Anchor>
         </Anchors>
         <Frames>
-          <Button name="BankHelperButtonToggleTab1" inherits="TabButtonTemplate" text="BH_UI_TAB_BANK" id="1">
+          <Button name="BankHelperTabBarTab1" inherits="TabButtonTemplate" text="BH_UI_TAB_BANK" id="1">
             <Anchors>
-              <Anchor point="LEFT" relativeTo="BankHelperTabBarFrame">
+              <Anchor point="LEFT" relativeTo="BankHelperTabBar">
                 <Offset>
                   <AbsDimension x="0" y="0"/>
                 </Offset>
@@ -528,19 +628,22 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
             </Anchors>
             <Scripts>
               <OnLoad>
-                -- PanelTemplates_SelectTab(this);
+                PanelTemplates_SelectTab(this);
                 PanelTemplates_TabResize(0);
                 getglobal(this:GetName().."HighlightTexture"):SetWidth(this:GetTextWidth() + 31);
               </OnLoad>
               <OnClick>
+                PlaySound("igSpellBookOpen");
+                PanelTemplates_SetTab(BankHelperTabBar, this:GetID());
                 BankHelperOptionsFrame:Hide();
+                BankHelperMailFrame:Hide();
                 BankHelperBankItemsFrame:Show();
               </OnClick>
             </Scripts>
           </Button>
-          <Button name="BankHelperButtonToggleTab2" inherits="TabButtonTemplate" text="BH_UI_TAB_CONTRIB" id="2">
+          <Button name="BankHelperTabBarTab2" inherits="TabButtonTemplate" text="BH_UI_TAB_CONTRIB" id="2">
             <Anchors>
-              <Anchor point="LEFT" relativeTo="BankHelperButtonToggleTab1" relativePoint="RIGHT">
+              <Anchor point="LEFT" relativeTo="BankHelperTabBarTab1" relativePoint="RIGHT">
                 <Offset>
                   <AbsDimension x="0" y="0"/>
                 </Offset>
@@ -551,16 +654,17 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
                 PanelTemplates_DeselectTab(this);
               </OnShow>
               <OnClick>
-                -- FriendsFrame.showFriendsList = nil;
-                -- FriendsFrame_Update();
+                PlaySound("igSpellBookOpen");
+                PanelTemplates_SetTab(BankHelperTabBar, this:GetID());
                 BankHelperBankItemsFrame:Hide();
                 BankHelperOptionsFrame:Hide();
+                BankHelperMailFrame:Show();
               </OnClick>
             </Scripts>
           </Button>
-          <Button name="BankHelperButtonToggleTab3" inherits="TabButtonTemplate" text="BH_UI_TAB_OPTIONS" id="3">
+          <Button name="BankHelperTabBarTab3" inherits="TabButtonTemplate" text="BH_UI_TAB_OPTIONS" id="3">
             <Anchors>
-              <Anchor point="LEFT" relativeTo="BankHelperButtonToggleTab2" relativePoint="RIGHT">
+              <Anchor point="LEFT" relativeTo="BankHelperTabBarTab2" relativePoint="RIGHT">
                 <Offset>
                   <AbsDimension x="0" y="0"/>
                 </Offset>
@@ -571,22 +675,32 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
                 PanelTemplates_DeselectTab(this);
               </OnShow>
               <OnClick>
-                -- FriendsFrame.showFriendsList = nil;
-                -- FriendsFrame_Update();
+                PlaySound("igSpellBookOpen");
+                PanelTemplates_SetTab(BankHelperTabBar, this:GetID());
                 BankHelperBankItemsFrame:Hide();
+                BankHelperMailFrame:Hide();
                 BankHelperOptionsFrame:Show();
               </OnClick>
             </Scripts>
           </Button>
         </Frames>
+        <Scripts>
+          <OnLoad>
+            PanelTemplates_SetNumTabs(this, 3);
+          </OnLoad>
+        </Scripts>
       </Frame>
     </Frames>
 
     <Scripts>
       <OnShow>
+        PlaySound("igCharacterInfoOpen");
         UIDropDownMenu_Initialize(BankHelperBankItemCharacterDropDown, BankHelperCharacterDropDownOnLoad);
         BankHelperItemFilterText:SetText("");
       </OnShow>
+      <OnHide>
+        PlaySound("igCharacterInfoClose");
+      </OnHide>
     </Scripts>
   </Frame>
 </Ui>

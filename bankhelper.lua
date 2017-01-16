@@ -7,6 +7,7 @@ end
 BANKHELPER_ITEM_SCROLLFRAME_HEIGHT = 37;
 local BANKITEMS_TO_DISPLAY = 7;
 local BANKITEMS_VAR_VERSION = 2;
+local MAILITEMS_TO_DISPLAY = 3;
 -- Global variables:
 local PlayerName = nil;
 local CharactersList = nil;
@@ -19,7 +20,16 @@ ItemsFilter.items = {};
 ItemsFilter.sortColumn = "name";
 ItemsFilter.sortAscendant = true;
 local MailFrameOpened = 0;
+local MailBoxItems = {};
 
+
+function BoolToStr(val)
+  if (val) then
+    return "true";
+  else
+    return "false";
+  end
+end
 -- Print function based on CTMod (CT_Master.lua)
 function BHPrint(msg, r, g, b, frame)
   if (msg == nil) then
@@ -107,6 +117,7 @@ function BankHelperOnEvent(event)
     BankHelperOnCloseMailFrame();
   elseif (event == "MAIL_INBOX_UPDATE") then
     BankHelperOnInboxUpdate();
+    BankHelperPopulateMailList();
   end
 end -- BankHelperOnEvent()
 
@@ -481,7 +492,7 @@ function BankHelperOnOpenMailFrame()
   -- CheckInbox();
   if (MailFrameOpened == 0) then
     MailFrameOpened = 1;
-    BHPrint("BankHelperOnOpenMailFrame");
+    -- BHPrint("BankHelperOnOpenMailFrame");
   else
     BHPrint("BankHelperOnOpenMailFrame: Mail frame already opened!");
   end
@@ -494,7 +505,7 @@ function BankHelperOnCloseMailFrame()
     BHPrint("BankHelperOnCloseMailFrame: " .. numItems .. " mails left");
     MailFrameOpened = 0;
   else
-    BHPrint("BankHelperOnCloseMailFrame: Mail frame already closed!");
+    -- BHPrint("BankHelperOnCloseMailFrame: Mail frame already closed!");
   end
 end -- BankHelperOnCloseMailFrame()
 
@@ -517,31 +528,121 @@ function BankHelperOnInboxUpdate()
     return;
   end
 
+  -- file = io.open("asyl_bank_mail.txt", "a");
+  -- io.output(file);
+  -- io.write(string.format("Date: %d\n"), os.time());
+  -- io.write(string.format("Number of mail items: %d\n", numItems));
+
+  BHPrint(string.format("Date: %d\n", time()));
+
+  MailBoxItems = {};
+
   -- Get list
   for i = 1, numItems, 1 do
+    local bodyText, texture, isTakeable, isInvoice;
     local packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, hasItem, wasRead, wasReturned, textCreated, canReply, isGM = GetInboxHeaderInfo(i);
+    local mailBoxItem = {};
 
-    if (money > 0 or hasItem) then
-      if (not sender) then
-        sender = "Inconnu";
-      end
-      if (not subject) then
-        subject = "Aucun sujet";
-      end
+    mailBoxItem.packageIcon = packageIcon;
+    mailBoxItem.stationeryIcon = stationeryIcon;
+    mailBoxItem.sender = sender;
+    mailBoxItem.subject = subject;
+    mailBoxItem.CODAmount = CODAmount;
+    mailBoxItem.daysLeft = daysLeft;
+    mailBoxItem.hasItem = hasItem;
+    mailBoxItem.wasReturned = wasReturned;
+    mailBoxItem.textCreated = textCreated;
+    mailBoxItem.canReply = canReply;
+    mailBoxItem.isGM = isGM;
 
-      BHPrint(string.format("Mail %d/%d: from %s: %s ", i, numItems, sender, subject));
+    -- TakeInboxItem(i);
+    -- Read message content:
+    bodyText, texture, isTakeable, isInvoice = GetInboxText(i);
+
+    mailBoxItem.text = bodyText;
+    mailBoxItem.texture = texture;
+    mailBoxItem.isTakeable = isTakeable;
+    mailBoxItem.isInvoice = isInvoice;
+
+    if (not wasRead) then
+      table.insert(MailBoxItems, mailBoxItem);
+    else
+      BHPrint(string.format("Mail %d/%d: Already read", i, numItems));
+      table.insert(MailBoxItems, mailBoxItem);
+    end
+
+    if (not sender) then
+      sender = "Inconnu";
+    end
+    if (not subject) then
+      subject = "Aucun sujet";
+    end
+
+    BHPrint(string.format("Mail %d/%d: from %s: %s (%s;%s;%s)", i, numItems, sender, subject, texture, BoolToStr(isTakeable), BoolToStr(isInvoice)));
+    if (bodyText) then
+      BHPrint(string.format("  Text: %s", bodyText));
+    else
+      BHPrint("  No text message");
+    end
+
+    if (not isGM and (money > 0 or hasItem)) then
+
       if (money > 0) then
-        BHPrint(string.format("  Money: %d", money));
+        -- BHPrint(string.format("  Money: %d", money));
       end
       if (hasItem) then
-        local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i, itemIndex);
+        local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i);
+
         if (itemName) then
-          BHPrint(string.format("  Item: [%s]x%d", itemName, itemCount));
+          -- local itemLink = GetInboxItemLink(i);
+          -- io.write(string.format("Mail %d/%d: from %s: %s [money=%d item='%s' count='%d']\n", i, numItems, sender, subject, money, itemName, itemCount));
+          if (itemCount == nil) then
+            itemCount = -1;
+          end
+          if (itemQuality == nil) then
+            itemQuality = -1;
+          end
+          BHPrint(string.format("  Item: [%s]x%d quality=%d can use:%s", itemName, itemCount, itemQuality, BoolToStr(itemCanUse)));
         else
-          BHPrint("  Item: [??]x?? -> WoW Error");
+          -- io.write(string.format("Mail %d/%d: from %s: %s [money=%d] WoW Error!\n", i, numItems, sender, subject, money));
+          -- BHPrint("  Item: [??]x?? -> WoW Error");
         end
+      else
+        -- io.write(string.format("Mail %d/%d: from %s: %s [money=%d]\n", i, numItems, sender, subject, money));
       end
     end
   end
-  BHPrint("BankHelperOnInboxUpdate: end");
+  -- BHPrint("BankHelperOnInboxUpdate: end");
+  -- io.close(file);
 end -- BankHelperOnInboxUpdate()
+
+function BankHelperPopulateMailList()
+  BHPrint("BankHelperPopulateMailList");
+
+  local nMails = table.getn(MailBoxItems);
+  if (nMails > MAILITEMS_TO_DISPLAY) then
+    nMails = MAILITEMS_TO_DISPLAY;
+  end
+
+  BHPrint(string.format("Number of saved mail info: %d", nMails));
+
+  for i = 1, nMails, 1 do
+    local buttonName = string.format("BankHelperMailEntry%d", i);
+    local icon;
+    if (packageIcon) then
+      icon = MailBoxItems[i].packageIcon;
+    else
+      icon = MailBoxItems[i].stationeryIcon;
+    end
+    getglobal(buttonName):Show();
+    if (icon) then
+      getglobal(buttonName .. "IconTexture"):Show();
+      getglobal(buttonName .. "IconTexture"):SetTexture(icon);
+    else
+      getglobal(buttonName .. "IconTexture"):Hide();
+      getglobal(buttonName .. "IconTexture"):SetTexture();
+    end
+    getglobal(buttonName .. "Sender"):SetText(MailBoxItems[i].sender);
+    getglobal(buttonName .. "Subject"):SetText(MailBoxItems[i].subject);
+  end
+end
