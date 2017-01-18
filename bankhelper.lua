@@ -7,7 +7,8 @@ end
 BANKHELPER_ITEM_SCROLLFRAME_HEIGHT = 37;
 local BANKITEMS_TO_DISPLAY = 7;
 local BANKITEMS_VAR_VERSION = 2;
-local MAILITEMS_TO_DISPLAY = 3;
+local MAILITEMS_TO_DISPLAY = 6;
+local MAILITEM_MAX_DAYS = 30.0;
 -- Global variables:
 local PlayerName = nil;
 local CharactersList = nil;
@@ -23,13 +24,71 @@ local MailFrameOpened = 0;
 local MailBoxItems = {};
 
 
-function BoolToStr(val)
+local function BoolToStr(val)
   if (val) then
     return "true";
   else
     return "false";
   end
 end
+-- Convert EPOCH time (in seconds since 01/01/1970 to a human readable format)
+-- Thanks to MINIX2 source code !
+local function TimeToStr(val)
+  local YEAR0 = 1970;
+  local SECS_DAY = 24 * 60 * 60;
+  local YTAB = {
+    { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
+    { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+  };
+
+  local t_sec, t_min, t_hour, t_mday, t_wday, t_month, t_year;
+  local dayclock, dayno;
+  local year = YEAR0;
+
+  local function leapyear(_year)
+    if (mod(_year, 4) ~= 0) then
+      return 0;
+    elseif (mod(_year, 100) ~= 0) then
+      return 1;
+    elseif (mod(_year, 400) ~= 0) then
+      return 0;
+    else
+      return 1;
+    end
+  end
+  local function yearsize(_year)
+    if (leapyear(_year) == 1) then
+      return 366
+    else
+      return 365;
+    end
+  end
+
+  dayclock = mod(val, SECS_DAY);
+  dayno = math.floor(val / SECS_DAY);
+
+  t_sec = mod(dayclock, 60);
+  t_min = mod(dayclock, 3600) / 60;
+  t_hour = math.floor(dayclock / 3600);
+  t_wday = mod((dayno + BH_WEEK_THURSDAY), 7) + 1; -- Day 0 was a thursday
+
+  while (dayno >= yearsize(year)) do
+    dayno = dayno - yearsize(year);
+    year = year + 1;
+  end
+
+  t_year = year;
+  t_month = 1;
+  -- BHPrint(string.format("leapyear(%d)=%s", year, leapyear(year)));
+  while (dayno >= YTAB[leapyear(year) + 1][t_month]) do
+    dayno = dayno - YTAB[leapyear(year) + 1][t_month];
+    t_month = t_month + 1;
+  end
+  t_mday = dayno + 1;
+
+  return string.format(BH_UI_MAIL_RECV_DATE, BH_DAYS_NAME[t_wday], t_mday, t_month, t_year, t_hour, t_min);
+end
+
 -- Print function based on CTMod (CT_Master.lua)
 function BHPrint(msg, r, g, b, frame)
   if (msg == nil) then
@@ -117,7 +176,6 @@ function BankHelperOnEvent(event)
     BankHelperOnCloseMailFrame();
   elseif (event == "MAIL_INBOX_UPDATE") then
     BankHelperOnInboxUpdate();
-    BankHelperPopulateMailList();
   end
 end -- BankHelperOnEvent()
 
@@ -490,6 +548,8 @@ end
 -- ================================================
 function BankHelperOnOpenMailFrame()
   -- CheckInbox();
+  ShowUIPanel(BankHelperUIFrame);
+  BankHelperTabBarTab2:Click();
   if (MailFrameOpened == 0) then
     MailFrameOpened = 1;
     -- BHPrint("BankHelperOnOpenMailFrame");
@@ -554,6 +614,8 @@ function BankHelperOnInboxUpdate()
     mailBoxItem.textCreated = textCreated;
     mailBoxItem.canReply = canReply;
     mailBoxItem.isGM = isGM;
+    -- Estimate the send/receive date:
+    mailBoxItem.receiveDate = time() + math.floor((daysLeft-MAILITEM_MAX_DAYS)*24.0*60.0*60.0);
 
     -- TakeInboxItem(i);
     -- Read message content:
@@ -595,7 +657,6 @@ function BankHelperOnInboxUpdate()
 
         if (itemName) then
           -- local itemLink = GetInboxItemLink(i);
-          -- io.write(string.format("Mail %d/%d: from %s: %s [money=%d item='%s' count='%d']\n", i, numItems, sender, subject, money, itemName, itemCount));
           if (itemCount == nil) then
             itemCount = -1;
           end
@@ -604,45 +665,61 @@ function BankHelperOnInboxUpdate()
           end
           BHPrint(string.format("  Item: [%s]x%d quality=%d can use:%s", itemName, itemCount, itemQuality, BoolToStr(itemCanUse)));
         else
-          -- io.write(string.format("Mail %d/%d: from %s: %s [money=%d] WoW Error!\n", i, numItems, sender, subject, money));
           -- BHPrint("  Item: [??]x?? -> WoW Error");
         end
-      else
-        -- io.write(string.format("Mail %d/%d: from %s: %s [money=%d]\n", i, numItems, sender, subject, money));
       end
     end
   end
+
+  BankHelperPopulateMailList();
   -- BHPrint("BankHelperOnInboxUpdate: end");
-  -- io.close(file);
 end -- BankHelperOnInboxUpdate()
 
 function BankHelperPopulateMailList()
   BHPrint("BankHelperPopulateMailList");
 
+  local itemsOffset = FauxScrollFrame_GetOffset(BankHelperMailScrollFrame);
   local nMails = table.getn(MailBoxItems);
+  local nMailsDisplay = nMails;
+  -- Hide mail item if needed
   if (nMails > MAILITEMS_TO_DISPLAY) then
-    nMails = MAILITEMS_TO_DISPLAY;
+    nMailsDisplay = MAILITEMS_TO_DISPLAY;
+  else
+    for i = nMails+1, MAILITEMS_TO_DISPLAY, 1 do
+      local buttonMailItem = getglobal(string.format("BankHelperMailEntry%d", i));
+      BHPrint(string.format("BankHelperMailEntry%d", i));
+      buttonMailItem:Hide();
+      buttonMailItem.mailItem = nil;
+    end
   end
+  --
+  FauxScrollFrame_Update(BankHelperMailScrollFrame, nMails, MAILITEMS_TO_DISPLAY, BANKHELPER_ITEM_SCROLLFRAME_HEIGHT);
 
   BHPrint(string.format("Number of saved mail info: %d", nMails));
 
-  for i = 1, nMails, 1 do
+  for i = 1, nMailsDisplay, 1 do
     local buttonName = string.format("BankHelperMailEntry%d", i);
-    local icon;
-    if (packageIcon) then
-      icon = MailBoxItems[i].packageIcon;
+    local buttonMailItem = getglobal(buttonName);
+    local icon, mailIdx;
+    local mailBoxItem;
+
+    mailIdx = i + itemsOffset;
+    mailBoxItem = MailBoxItems[mailIdx];
+    if (mailBoxItem.packageIcon) then
+      icon = mailBoxItem.packageIcon;
     else
-      icon = MailBoxItems[i].stationeryIcon;
+      icon = mailBoxItem.stationeryIcon;
     end
-    getglobal(buttonName):Show();
+    buttonMailItem:Show();
+    buttonMailItem.mailItem = mailBoxItem;
     if (icon) then
-      getglobal(buttonName .. "IconTexture"):Show();
       getglobal(buttonName .. "IconTexture"):SetTexture(icon);
     else
-      getglobal(buttonName .. "IconTexture"):Hide();
       getglobal(buttonName .. "IconTexture"):SetTexture();
     end
-    getglobal(buttonName .. "Sender"):SetText(MailBoxItems[i].sender);
-    getglobal(buttonName .. "Subject"):SetText(MailBoxItems[i].subject);
+    getglobal(buttonName .. "Sender"):SetText(mailBoxItem.sender);
+    getglobal(buttonName .. "Subject"):SetText(mailBoxItem.subject);
+    getglobal(buttonName .. "ExpireTime"):SetText(string.format(BH_UI_MAIL_DAYS_LEFT, math.floor(mailBoxItem.daysLeft)));
+    getglobal(buttonName .. "ReceiveDate"):SetText(TimeToStr(mailBoxItem.receiveDate));
   end
 end

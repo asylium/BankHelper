@@ -6,11 +6,16 @@ if (GetLocale() == "frFR") then
   BINDING_NAME_BH_UITOGGLE = "Afficher/Masquer BankHelper";
   BINDING_HEADER_BH_UIBINDS= "Bank Helper";
 
+  BH_DAYS_NAME = {"Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"};
+  BH_WEEK_THURSDAY = 3;
+
   BH_UI_LEVEL = "Niv";
   BH_UI_QUANTITY = "Nb";
   BH_UI_TAB_BANK = "Banque";
   BH_UI_TAB_CONTRIB = "Contrib.";
   BH_UI_TAB_OPTIONS = "Options";
+  BH_UI_MAIL_DAYS_LEFT = "%d jour(s) restant";
+  BH_UI_MAIL_RECV_DATE = "%s %d/%d/%d %d:%d";
 
   -- Item quality
   BH_QUALITY = {};

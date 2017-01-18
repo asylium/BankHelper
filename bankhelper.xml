@@ -184,30 +184,61 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
         </Texture>
         <FontString name="$parentSender" inherits="GameFontNormalSmall" justifyH="LEFT">
           <Size>
-            <AbsDimension x="140" y="14"/>
+            <AbsDimension x="90" y="14"/>
           </Size>
           <Anchors>
-            <Anchor point="LEFT" relativeTo="$parentIconTexture" relativePoint="RIGHT">
+            <Anchor point="LEFT" relativeTo="$parentIconTexture" relativePoint="TOPRIGHT">
               <Offset>
-                <AbsDimension x="6" y="0"/>
+                <AbsDimension x="6" y="-7"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </FontString>
+        <FontString name="$parentExpireTime" inherits="GameFontGreenSmall" justifyH="LEFT">
+          <Size>
+            <AbsDimension x="90" y="14"/>
+          </Size>
+          <Anchors>
+            <Anchor point="LEFT" relativeTo="$parentSender" relativePoint="BOTTOMLEFT">
+              <Offset>
+                <AbsDimension x="0" y="-7"/>
               </Offset>
             </Anchor>
           </Anchors>
         </FontString>
         <FontString name="$parentSubject" inherits="GameFontHighlightSmall" justifyH="LEFT">
           <Size>
-            <AbsDimension x="240" y="14"/>
+            <AbsDimension x="180" y="14"/>
           </Size>
           <Anchors>
             <Anchor point="LEFT" relativeTo="$parentSender" relativePoint="RIGHT">
               <Offset>
-                <AbsDimension x="0" y="0"/>
+                <AbsDimension x="6" y="0"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </FontString>
+        <FontString name="$parentReceiveDate" inherits="GameFontDisableSmall" justifyH="LEFT">
+          <Size>
+            <AbsDimension x="180" y="14"/>
+          </Size>
+          <Anchors>
+            <Anchor point="LEFT" relativeTo="$parentSubject" relativePoint="BOTTOMLEFT">
+              <Offset>
+                <AbsDimension x="0" y="-7"/>
               </Offset>
             </Anchor>
           </Anchors>
         </FontString>
       </Layer>
     </Layers>
+    <Scripts>
+      <OnClick>
+        if (this.mailItem) then
+          BHPrint(string.format("Click on mail from %s: %s", this.mailItem.sender, this.mailItem.subject));
+        end
+      </OnClick>
+    </Scripts>
   </Button>
 
   <!-- Main UI frame -->
@@ -593,6 +624,33 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
           <Button name="BankHelperMailEntry3" inherits="BankHelperMailEntryTemplate">
             <Anchors>
               <Anchor point="TOP" relativeTo="BankHelperMailEntry2" relativePoint="BOTTOM">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+          </Button>
+          <Button name="BankHelperMailEntry4" inherits="BankHelperMailEntryTemplate">
+            <Anchors>
+              <Anchor point="TOP" relativeTo="BankHelperMailEntry3" relativePoint="BOTTOM">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+          </Button>
+          <Button name="BankHelperMailEntry5" inherits="BankHelperMailEntryTemplate">
+            <Anchors>
+              <Anchor point="TOP" relativeTo="BankHelperMailEntry4" relativePoint="BOTTOM">
+                <Offset>
+                  <AbsDimension x="0" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+          </Button>
+          <Button name="BankHelperMailEntry6" inherits="BankHelperMailEntryTemplate">
+            <Anchors>
+              <Anchor point="TOP" relativeTo="BankHelperMailEntry5" relativePoint="BOTTOM">
                 <Offset>
                   <AbsDimension x="0" y="0"/>
                 </Offset>
