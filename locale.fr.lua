@@ -16,6 +16,7 @@ if (GetLocale() == "frFR") then
   BH_UI_TAB_OPTIONS = "Options";
   BH_UI_MAIL_DAYS_LEFT = "%d jour(s) restant";
   BH_UI_MAIL_RECV_DATE = "%s %d/%d/%d %d:%d";
+  BH_UI_MAIL_RECOVER = "Récupérer";
 
   -- Item quality
   BH_QUALITY = {};
