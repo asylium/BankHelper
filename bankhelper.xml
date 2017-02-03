@@ -736,6 +736,9 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
                 PanelTemplates_SelectTab(this);
                 PanelTemplates_TabResize(0);
                 getglobal(this:GetName().."HighlightTexture"):SetWidth(this:GetTextWidth() + 31);
+                BankHelperOptionsFrame:Hide();
+                BankHelperMailFrame:Hide();
+                BankHelperBankItemsFrame:Show();
               </OnLoad>
               <OnClick>
                 PlaySound("igSpellBookOpen");

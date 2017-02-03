@@ -133,6 +133,7 @@ function BankHelperOnLoad()
   this:RegisterEvent("MAIL_INBOX_UPDATE");
   this:RegisterEvent("MAIL_CLOSED");
   this:RegisterEvent("UI_ERROR_MESSAGE");
+  this:RegisterEvent("BAG_UPDATE");
   BHPrint("BankHelper loaded");
 end -- BankHelperOnLoad()
 
@@ -147,6 +148,9 @@ function BankHelperOnEvent(event)
     if (not BanksItems or not BanksItems["version"] or BanksItems["version"] ~= BANKITEMS_VAR_VERSION) then
       BanksItems = {};
       BanksItems["version"] = BANKITEMS_VAR_VERSION;
+    end
+    if (not BanksItems["locale"]) then
+      BanksItems["locale"] = GetLocale();
     end
     if (not BanksItems[PlayerName]) then
       BanksItems[PlayerName] = {};
@@ -178,6 +182,11 @@ function BankHelperOnEvent(event)
     BankHelperOnOpenBankFrame();
   elseif (event == "BANKFRAME_CLOSED") then
     BankHelperOnCloseBankFrame();
+  elseif (event == "BAG_UPDATE") then
+    if (MailBoxStatus == MAILBOX_RECOVER) then
+      BHPrint("MAILBOX_RECOVER: BAG UPDATE");
+      BankHelperFetchMails(event);
+    end
   elseif (event == "MAIL_SHOW") then
     BHPrint("MAIL_SHOW");
     BankHelperOnOpenMailFrame();
@@ -192,12 +201,9 @@ function BankHelperOnEvent(event)
         BankHelperOnInboxUpdate();
         LastUpdateMailboxTime = currentTime;
       end
-  elseif (event == "UI_ERROR_MESSAGE") then
+  elseif (event == "UI_ERROR_MESSAGE" and MailBoxStatus == MAILBOX_RECOVER) then
     BHPrint("UI_ERROR_MESSAGE - TODO");
-    if (MailBoxStatus == MAILBOX_RECOVER) then
-      MailBoxStatus = MAILBOX_RECOVER_ERROR;
-      BankHelperFetchMails("EVENT");
-    end
+    BankHelperFetchMails(event);
   end
 end -- BankHelperOnEvent()
 
@@ -624,12 +630,13 @@ function BankHelperOnInboxUpdate()
     local packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, hasItem, wasRead, wasReturned, textCreated, canReply, isGM = GetInboxHeaderInfo(i);
     local mailBoxItem = {};
 
-    -- if (sender == "") then
-    --   BHPrint("sender is empty");
-    --   LastUpdateMailboxTime = 0;
-    -- end
+    -- If no sender set it to "Unknown"
+    if (not sender) then
+      sender = UNKNOWN;
+    end
 
     mailBoxItem.index = i;
+
     mailBoxItem.packageIcon = packageIcon;
     mailBoxItem.stationeryIcon = stationeryIcon;
     mailBoxItem.sender = sender;
@@ -645,7 +652,7 @@ function BankHelperOnInboxUpdate()
     mailBoxItem.receiveDate = time() + math.floor((daysLeft-MAILITEM_MAX_DAYS)*24.0*60.0*60.0);
 
     -- Inbox text
-    mailBoxItem.text = nil;
+    mailBoxItem.bodyText = nil;
     mailBoxItem.texture = nil;
     mailBoxItem.isTakeable = nil;
     mailBoxItem.isInvoice = nil;
@@ -655,27 +662,6 @@ function BankHelperOnInboxUpdate()
     mailBoxItem.itemCount = nil;
     mailBoxItem.itemQuality = nil;
     mailBoxItem.itemCanUse = nil;
-
-    --[[
-    if (hasItem) then
-      local itemName, itemTexture, itemCount, itemQuality, itemCanUse = GetInboxItem(i);
-
-      if (itemName) then
-        -- local itemLink = GetInboxItemLink(i);
-        if (itemCount == nil) then
-          itemCount = -1;
-        end
-        if (itemQuality == nil) then
-          itemQuality = -1;
-        end
-        mailBoxItem.itemName = itemName;
-        mailBoxItem.itemTexture = itemTexture;
-        mailBoxItem.itemCount = itemCount;
-        mailBoxItem.itemQuality = itemQuality;
-        mailBoxItem.itemCanUse = itemCanUse;
-      end
-    end
-    ]]
 
     table.insert(MailBoxItems, mailBoxItem);
   end
@@ -744,34 +730,62 @@ function BankHelperFetchMailButtonOnClick()
   end
 end
 
+function BankHelperAddContrib(mailBoxItem)
+  local contrib = {};
+  contrib.sender = mailBoxItem.sender;
+  contrib.receiveDate = mailBoxItem.receiveDate;
+  contrib.subject = mailBoxItem.subject;
+  contrib.bodyText = mailBoxItem.bodyText;
+  contrib.CODAmount = mailBoxItem.CODAmount;
+  contrib.itemName = mailBoxItem.itemName;
+  contrib.itemCount = mailBoxItem.itemCount;
+  contrib.itemQuality = mailBoxItem.itemQuality;
+  contrib.wasReturned = mailBoxItem.wasReturned;
+  contrib.itemTexture = mailBoxItem.itemTexture;
+  table.insert(BanksContributors, contrib);
+end
+
 -- @brief Recovers all item received
 -- @par Since TakeInboxItem() is an async function, we can't simply do a loop with all mail items
 -- BankHelperFetchMailButtonOnClick() -> BankHelperFetchMails("BUTTON")
---    TakeInboxItem() -> Generate event MAIL_INBOX_UPDATE
+--    TakeInboxItem() -> Generate event MAIL_INBOX_UPDATE et BAG_UPDATE ou UI_ERROR_MESSAGE
 --      BankHelperOnEvent(MAIL_INBOX_UPDATE) -> BankHelperFetchMails("EVENT")
 function BankHelperFetchMails(source)
-  local bodyText, texture, isTakeable, isInvoice;
-  if (MailBoxStatus == MAILBOX_RECOVER and source == "BUTTON") then
+  if (MailBoxStatus == MAILBOX_RECOVER and (source == "BUTTON" or source == "BAG_UPDATE")) then
     local nMails = table.getn(MailBoxItems);
-    for i = 1, nMails, 1 do
+
+    if (source == "BAG_UPDATE") then
+      MailBoxStatus = MAILBOX_OPEN;
+      BankHelperOnInboxUpdate();
+      MailBoxStatus = MAILBOX_RECOVER;
+      -- Scan for the bag content change, to get the fetch item id
+    end
+
+    for i = nMails, 1, -1 do
       mailBoxItem = MailBoxItems[i];
       if (mailBoxItem.hasItem and mailBoxItem.CODAmount == 0 and not mailBoxItem.isGM) then
-        BHPrint(string.format("Mail %d/%d: Get [%s]x%d", i, nMails, mailBoxItem.itemName, mailBoxItem.itemCount));
-
+        local mailIndex = mailBoxItem.index;
         -- Read message content (will generate an MAIL_INBOX_UPDATE):
-        mailBoxItem.bodyText, mailBoxItem.texture, mailBoxItem.isTakeable, mailBoxItem.isInvoice = GetInboxText(i);
+        mailBoxItem.bodyText, mailBoxItem.texture, mailBoxItem.isTakeable, mailBoxItem.isInvoice = GetInboxText(mailIndex);
+
+        -- Get item infos (will generate an MAIL_INBOX_UPDATE?):
+        mailBoxItem.itemName, mailBoxItem.itemTexture, mailBoxItem.itemCount, mailBoxItem.itemQuality, mailBoxItem.itemCanUse = GetInboxItem(mailIndex);
+        BHPrint(string.format("Mail %d/%d: Get [%s]x%d", mailIndex, nMails, mailBoxItem.itemName, mailBoxItem.itemCount));
+
         -- TakeInboxItem will generate an MAIL_INBOX_UPDATE or UI_ERROR_MESSAGE event
-        TakeInboxItem(mailBoxItem.index);
+        mailBoxItem.hasItem = 0;
+        TakeInboxItem(mailIndex);
+
         -- TakeInboxMoney
-        table.insert(BanksContributors, mailBoxItem);
-        return; -- end here, wait for the MAIL_INBOX_UPDATE event
+        BankHelperAddContrib(mailBoxItem);
+        return; -- end here, wait for the BAG_UPDATE event
       end
     end
     -- No item to recover
     MailBoxStatus = MAILBOX_OPEN;
     BankHelperFetchMailButton:Enable();
     BankHelperOnInboxUpdate();
-  elseif (MailBoxStatus == MAILBOX_RECOVER_ERROR) then
+  elseif (MailBoxStatus == MAILBOX_RECOVER and source == "UI_ERROR_MESSAGE") then
     BHPrint("Error recovering all mails items");
     MailBoxStatus = MAILBOX_OPEN;
     BankHelperFetchMailButton:Enable();
