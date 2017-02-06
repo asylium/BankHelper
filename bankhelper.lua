@@ -1,12 +1,13 @@
 -- Global saved variables
-if (BanksItems == nil) then
-  BanksItems = { };
-  BanksContributors = { };
+if (BankHelperDatas == nil) then
+  BankHelperDatas = { };
 end
 -- Global constants:
 BANKHELPER_ITEM_SCROLLFRAME_HEIGHT = 37;
+
+local BANKHELPER_VAR_VERSION = 1;
+
 local BANKITEMS_TO_DISPLAY = 7;
-local BANKITEMS_VAR_VERSION = 2;
 local MAILITEMS_TO_DISPLAY = 6;
 local MAILITEM_MAX_DAYS = 30.0;
 local MAILBOX_CLOSE_NEED_UPDATE = 1;
@@ -142,42 +143,57 @@ function BankHelperOnEvent(event)
   -- BHPrint("BankHelperOnEvent: " .. event);
   if (event == "PLAYER_ENTERING_WORLD") then
     local money = GetMoney();
+    local playerData = nil;
     PlayerName = UnitName("player") .. "@" .. GetRealmName();
 
     -- Init
-    if (not BanksItems or not BanksItems["version"] or BanksItems["version"] ~= BANKITEMS_VAR_VERSION) then
-      BanksItems = {};
-      BanksItems["version"] = BANKITEMS_VAR_VERSION;
+    if (not BankHelperDatas or not BankHelperDatas["version"] or BankHelperDatas["version"] ~= BANKHELPER_VAR_VERSION) then
+      BankHelperDatas = {};
+      BankHelperDatas["version"] = BANKHELPER_VAR_VERSION;
     end
-    if (not BanksItems["locale"]) then
-      BanksItems["locale"] = GetLocale();
+    if (not BankHelperDatas["locale"]) then
+      BankHelperDatas["locale"] = GetLocale();
     end
-    if (not BanksItems[PlayerName]) then
-      BanksItems[PlayerName] = {};
+
+    if (not BankHelperDatas["compte"]) then
+      BankHelperDatas["compte"] = "";
     end
-    if (not BanksItems["items"]) then
-      BanksItems["items"] = {};
+    if (not BankHelperDatas["players"]) then
+      BankHelperDatas["players"] = {};
     end
-    if (not BanksItems[PlayerName]["money"]) then
-      BanksItems[PlayerName]["money"] = 0;
+    if (not BankHelperDatas["contribs"]) then
+      BankHelperDatas["contribs"] = {};
     end
-    if (not BanksItems[PlayerName]["name"]) then
-      BanksItems[PlayerName]["name"] = UnitName("player");
+    if (not BankHelperDatas["players"][PlayerName]) then
+      playerData = {};
+    else
+      playerData = BankHelperDatas["players"][PlayerName];
     end
-    if (not BanksItems[PlayerName]["numItems"]) then
-      BanksItems[PlayerName]["numItems"] = 0;
+
+    if (not BankHelperDatas["items"]) then
+      BankHelperDatas["items"] = {};
     end
-    if (not BanksItems[PlayerName]["items"]) then
-      BanksItems[PlayerName]["items"] = {};
+    if (not playerData["name"]) then
+      playerData["name"] = UnitName("player");
+    end
+    if (not playerData["money"]) then
+      playerData["money"] = 0;
+    end
+    if (not playerData["numItems"]) then
+      playerData["numItems"] = 0;
+    end
+    if (not playerData["items"]) then
+      playerData["items"] = {};
     end
 
     -- Check money change
-    if (BanksItems[PlayerName]["money"] ~= money) then
-      local moneyPrev = BanksItems[PlayerName]["money"];
+    if (playerData["money"] ~= money) then
+      local moneyPrev = playerData["money"];
       BHPrint(string.format("Player money changed since last connection: %d -> %d (difference = %d)", moneyPrev, money, (money - moneyPrev)));
-      BanksItems[PlayerName]["money"] = money;
+      playerData["money"] = money;
     end
 
+    BankHelperDatas["players"][PlayerName] = playerData;
   elseif (event == "BANKFRAME_OPENED") then
     BankHelperOnOpenBankFrame();
   elseif (event == "BANKFRAME_CLOSED") then
@@ -194,6 +210,9 @@ function BankHelperOnEvent(event)
     BHPrint("MAIL_CLOSED");
     BankHelperOnCloseMailFrame();
   elseif (event == "MAIL_INBOX_UPDATE") then
+    if (MailBoxStatus == MAILBOX_RECOVER) then
+      BankHelperFetchMails(event);
+    else
       local currentTime = time();
       -- Prevent too many update when opening the mail box
       if (currentTime > LastUpdateMailboxTime) then
@@ -201,6 +220,7 @@ function BankHelperOnEvent(event)
         BankHelperOnInboxUpdate();
         LastUpdateMailboxTime = currentTime;
       end
+    end
   elseif (event == "UI_ERROR_MESSAGE" and MailBoxStatus == MAILBOX_RECOVER) then
     BHPrint("UI_ERROR_MESSAGE - TODO");
     BankHelperFetchMails(event);
@@ -221,27 +241,26 @@ function BankHelperAddItem(itemId, itemsCount, count)
 
   if (not itemsCount[itemIdStr]) then
     itemsCount[itemIdStr] = 0;
-    BanksItems[PlayerName]["numItems"] = BanksItems[PlayerName]["numItems"] + 1;
+    BankHelperDatas["players"][PlayerName]["numItems"] = BankHelperDatas["players"][PlayerName]["numItems"] + 1;
   end
 
-  if (not BanksItems["items"][itemIdStr]) then
-    BanksItems["items"][itemIdStr] = {};
-    BanksItems["items"][itemIdStr]["name"] = itemName;
-    BanksItems["items"][itemIdStr]["db_link"] = string.format("https://www.nostalgeek-serveur.com/db/?item=%s", itemIdStr);
-    BanksItems["items"][itemIdStr]["wow_link"] = itemLink;
-    BanksItems["items"][itemIdStr]["texture"] = itemTexture;
-    BanksItems["items"][itemIdStr]["level"] = itemLevel;
-    BanksItems["items"][itemIdStr]["quality"] = itemQuality;
-    BanksItems["items"][itemIdStr]["type"] = itemType;
-    BanksItems["items"][itemIdStr]["subtype"] = itemSubtype;
-    -- BanksItems["items"][itemIdStr]["count"] = 0;
+  if (not BankHelperDatas["items"][itemIdStr]) then
+    BankHelperDatas["items"][itemIdStr] = {};
+    BankHelperDatas["items"][itemIdStr]["name"] = itemName;
+    -- BankHelperDatas["items"][itemIdStr]["db_link"] = string.format("https://www.nostalgeek-serveur.com/db/?item=%s", itemIdStr);
+    BankHelperDatas["items"][itemIdStr]["wow_link"] = itemLink;
+    BankHelperDatas["items"][itemIdStr]["texture"] = itemTexture;
+    BankHelperDatas["items"][itemIdStr]["level"] = itemLevel;
+    BankHelperDatas["items"][itemIdStr]["quality"] = itemQuality;
+    BankHelperDatas["items"][itemIdStr]["type"] = itemType;
+    BankHelperDatas["items"][itemIdStr]["subtype"] = itemSubtype;
   end
-  if (not BanksItems[PlayerName]["items"][itemIdStr]) then
-    BanksItems[PlayerName]["items"][itemIdStr] = 0;
+  if (not BankHelperDatas["players"][PlayerName]["items"][itemIdStr]) then
+    BankHelperDatas["players"][PlayerName]["items"][itemIdStr] = 0;
   end
 
   itemsCount[itemIdStr] = itemsCount[itemIdStr] + count;
-  BanksItems[PlayerName]["items"][itemIdStr] = itemsCount[itemIdStr];
+  BankHelperDatas["players"][PlayerName]["items"][itemIdStr] = itemsCount[itemIdStr];
 end
 
 function BankHelperOnOpenBankFrame()
@@ -252,9 +271,9 @@ function BankHelperOnOpenBankFrame()
     "MAINHANDSLOT", "NECKSLOT", "RANGEDSLOT", "SECONDARYHANDSLOT", "SHIRTSLOT", "SHOULDERSLOT", "TABARDSLOT",
     "TRINKET0SLOT", "TRINKET1SLOT", "WAISTSLOT", "WRISTSLOT"};
 
-  BanksItems[PlayerName]["numItems"] = 0;
-  BanksItems[PlayerName]["old_items"] = BanksItems[PlayerName]["items"];
-  BanksItems[PlayerName]["items"] = {};
+  BankHelperDatas["players"][PlayerName]["numItems"] = 0;
+  BankHelperDatas["players"][PlayerName]["old_items"] = BankHelperDatas["players"][PlayerName]["items"];
+  BankHelperDatas["players"][PlayerName]["items"] = {};
 
   -- BANK_CONTAINER = -1; -- Global variable already set in WoW API
   --Take the items in the bags:
@@ -318,7 +337,7 @@ function BankHelperCharacterDropDownOnLoad(level)
   if (CharactersList == nil) then
     CharactersList = {};
     nCharacters = 1;
-    for key, val in BanksItems do
+    for key, val in BankHelperDatas["players"] do
       if (string.find(key, pattern) ~= nil) then
         CharactersList[nCharacters] = {};
         CharactersList[nCharacters]["key"] = key;
@@ -353,7 +372,7 @@ function BankHelperUpdateItemFilter(itemNameFilter)
   local itemIdStr, itemCount, itemName;
   local pattern;
   local characterKey = CharactersList[CharacterSelectedID]["key"];
-  local characterBankItems = BanksItems[characterKey]["items"];
+  local characterBankItems = BankHelperDatas["players"][characterKey]["items"];
 
   -- BHPrint("BankHelperUpdateItemFilter");
 
@@ -367,7 +386,7 @@ function BankHelperUpdateItemFilter(itemNameFilter)
 
   if (itemNameFilter == "") then
     ItemsFilter.text  = nil;
-    ItemsFilter.count = BanksItems[characterKey]["numItems"];
+    ItemsFilter.count = BankHelperDatas["players"][characterKey]["numItems"];
     ItemsFilter.items = {};
     for itemIdStr, itemCount in characterBankItems do
       local infos = {};
@@ -382,7 +401,7 @@ function BankHelperUpdateItemFilter(itemNameFilter)
     ItemsFilter.items = {};
     pattern = ".*" .. string.lower(itemNameFilter) .. ".*";
     for itemIdStr, itemCount in characterBankItems do
-      itemName = BanksItems["items"][itemIdStr]["name"];
+      itemName = BankHelperDatas["items"][itemIdStr]["name"];
       if (string.find(string.lower(itemName), pattern)) then
         local infos = {};
         infos.id = itemIdStr;
@@ -433,11 +452,11 @@ function BankHelperCompareBankItem(a, b)
   -- For some reason, if I do "cmp = not cmp" for descending sort, there is an LUA error.
   if (ItemsFilter.sortAscendant) then
     if (ItemsFilter.sortColumn == "name") then
-      cmp = BanksItems["items"][itemIdStrA]["name"] < BanksItems["items"][itemIdStrB]["name"];
+      cmp = BankHelperDatas["items"][itemIdStrA]["name"] < BankHelperDatas["items"][itemIdStrB]["name"];
     elseif (ItemsFilter.sortColumn == "quality") then
-      cmp = BanksItems["items"][itemIdStrA]["quality"] < BanksItems["items"][itemIdStrB]["quality"];
+      cmp = BankHelperDatas["items"][itemIdStrA]["quality"] < BankHelperDatas["items"][itemIdStrB]["quality"];
     elseif (ItemsFilter.sortColumn == "level") then
-      cmp = BanksItems["items"][itemIdStrA]["level"] < BanksItems["items"][itemIdStrB]["level"];
+      cmp = BankHelperDatas["items"][itemIdStrA]["level"] < BankHelperDatas["items"][itemIdStrB]["level"];
     elseif (ItemsFilter.sortColumn == "quantity") then
       cmp = a.count < b.count;
     else
@@ -445,11 +464,11 @@ function BankHelperCompareBankItem(a, b)
     end
   else
     if (ItemsFilter.sortColumn == "name") then
-      cmp = BanksItems["items"][itemIdStrA]["name"] > BanksItems["items"][itemIdStrB]["name"];
+      cmp = BankHelperDatas["items"][itemIdStrA]["name"] > BankHelperDatas["items"][itemIdStrB]["name"];
     elseif (ItemsFilter.sortColumn == "quality") then
-      cmp = BanksItems["items"][itemIdStrA]["quality"] > BanksItems["items"][itemIdStrB]["quality"];
+      cmp = BankHelperDatas["items"][itemIdStrA]["quality"] > BankHelperDatas["items"][itemIdStrB]["quality"];
     elseif (ItemsFilter.sortColumn == "level") then
-      cmp = BanksItems["items"][itemIdStrA]["level"] > BanksItems["items"][itemIdStrB]["level"];
+      cmp = BankHelperDatas["items"][itemIdStrA]["level"] > BankHelperDatas["items"][itemIdStrB]["level"];
     elseif (ItemsFilter.sortColumn == "quantity") then
       cmp = a.count > b.count;
     else
@@ -518,10 +537,10 @@ function BankHelperPopulateBankList()
     -- BHPrint("itemIndex=" .. itemIndex .. " buttonIndex=" .. buttonIndex);
     itemIdStr = ItemsFilter.items[itemIndex].id;
     itemCount = ItemsFilter.items[itemIndex].count;
-    itemName = BanksItems["items"][itemIdStr]["name"];
-    itemLevel = BanksItems["items"][itemIdStr]["level"];
-    itemTexture = BanksItems["items"][itemIdStr]["texture"];
-    itemQuality = BanksItems["items"][itemIdStr]["quality"];
+    itemName = BankHelperDatas["items"][itemIdStr]["name"];
+    itemLevel = BankHelperDatas["items"][itemIdStr]["level"];
+    itemTexture = BankHelperDatas["items"][itemIdStr]["texture"];
+    itemQuality = BankHelperDatas["items"][itemIdStr]["quality"];
 
     if (not itemQuality) then
       BHPrint("Error on item " .. itemIdStr .. " Quality is nil");
@@ -598,9 +617,50 @@ function BankHelperOnCloseMailFrame()
   end
 end -- BankHelperOnCloseMailFrame()
 
+function BankHelperGetHeaderInfo(index)
+  local packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, hasItem, wasRead, wasReturned, textCreated, canReply, isGM = GetInboxHeaderInfo(index);
+  local mailBoxItem = {};
+
+  -- If no sender set it to "Unknown"
+  if (not sender) then
+    sender = UNKNOWN;
+  end
+
+  mailBoxItem.index = index;
+
+  mailBoxItem.packageIcon = packageIcon;
+  mailBoxItem.stationeryIcon = stationeryIcon;
+  mailBoxItem.sender = sender;
+  mailBoxItem.subject = subject;
+  mailBoxItem.CODAmount = CODAmount;
+  mailBoxItem.daysLeft = daysLeft;
+  mailBoxItem.hasItem = hasItem;
+  mailBoxItem.wasReturned = wasReturned;
+  mailBoxItem.textCreated = textCreated;
+  mailBoxItem.canReply = canReply;
+  mailBoxItem.isGM = isGM;
+  -- Estimate the send/receive date:
+  mailBoxItem.receiveDate = time() + math.floor((daysLeft-MAILITEM_MAX_DAYS)*24.0*60.0*60.0);
+
+  -- Inbox text
+  mailBoxItem.bodyText = nil;
+  mailBoxItem.texture = nil;
+  mailBoxItem.isTakeable = nil;
+  mailBoxItem.isInvoice = nil;
+  -- Inbox item
+  mailBoxItem.itemName = nil;
+  mailBoxItem.itemTexture = nil;
+  mailBoxItem.itemCount = nil;
+  mailBoxItem.itemQuality = nil;
+  mailBoxItem.itemCanUse = nil;
+
+  return mailBoxItem;
+end
+
 -- @brief Fetch available mails items
 function BankHelperOnInboxUpdate()
   local numItems;
+  local mailBoxItem;
 
   if (MailBoxStatus ~= MAILBOX_OPEN) then
     BHPrint(string.format("BankHelperOnInboxUpdate: Invalid MailBoxStatus(%d) ~= MAILBOX_OPEN(%d)", MailBoxStatus, MAILBOX_OPEN));
@@ -627,42 +687,7 @@ function BankHelperOnInboxUpdate()
 
   -- Get list
   for i = 1, numItems, 1 do
-    local packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, hasItem, wasRead, wasReturned, textCreated, canReply, isGM = GetInboxHeaderInfo(i);
-    local mailBoxItem = {};
-
-    -- If no sender set it to "Unknown"
-    if (not sender) then
-      sender = UNKNOWN;
-    end
-
-    mailBoxItem.index = i;
-
-    mailBoxItem.packageIcon = packageIcon;
-    mailBoxItem.stationeryIcon = stationeryIcon;
-    mailBoxItem.sender = sender;
-    mailBoxItem.subject = subject;
-    mailBoxItem.CODAmount = CODAmount;
-    mailBoxItem.daysLeft = daysLeft;
-    mailBoxItem.hasItem = hasItem;
-    mailBoxItem.wasReturned = wasReturned;
-    mailBoxItem.textCreated = textCreated;
-    mailBoxItem.canReply = canReply;
-    mailBoxItem.isGM = isGM;
-    -- Estimate the send/receive date:
-    mailBoxItem.receiveDate = time() + math.floor((daysLeft-MAILITEM_MAX_DAYS)*24.0*60.0*60.0);
-
-    -- Inbox text
-    mailBoxItem.bodyText = nil;
-    mailBoxItem.texture = nil;
-    mailBoxItem.isTakeable = nil;
-    mailBoxItem.isInvoice = nil;
-    -- Inbox item
-    mailBoxItem.itemName = nil;
-    mailBoxItem.itemTexture = nil;
-    mailBoxItem.itemCount = nil;
-    mailBoxItem.itemQuality = nil;
-    mailBoxItem.itemCanUse = nil;
-
+    mailBoxItem = BankHelperGetHeaderInfo(i);
     table.insert(MailBoxItems, mailBoxItem);
   end
 
@@ -742,7 +767,10 @@ function BankHelperAddContrib(mailBoxItem)
   contrib.itemQuality = mailBoxItem.itemQuality;
   contrib.wasReturned = mailBoxItem.wasReturned;
   contrib.itemTexture = mailBoxItem.itemTexture;
-  table.insert(BanksContributors, contrib);
+  contrib.texture = mailBoxItem.texture;
+  contrib.isInvoice = mailBoxItem.isInvoice;
+  contrib.mailBoxItem = mailBoxItem;
+  table.insert(BankHelperDatas["contribs"], contrib);
 end
 
 -- @brief Recovers all item received
@@ -750,8 +778,36 @@ end
 -- BankHelperFetchMailButtonOnClick() -> BankHelperFetchMails("BUTTON")
 --    TakeInboxItem() -> Generate event MAIL_INBOX_UPDATE et BAG_UPDATE ou UI_ERROR_MESSAGE
 --      BankHelperOnEvent(MAIL_INBOX_UPDATE) -> BankHelperFetchMails("EVENT")
+local BankHelperFetchMails_index = -1;
 function BankHelperFetchMails(source)
-  if (MailBoxStatus == MAILBOX_RECOVER and (source == "BUTTON" or source == "BAG_UPDATE")) then
+  local mailBoxItem;
+
+  if (MailBoxStatus ~= MAILBOX_RECOVER) then
+    BHPrint(string.format("Call to BankHelperFetchMails(%s) invalid: MailBoxStatus=%d", source, MailBoxStatus), 1.0, 0.3, 0.3);
+    return;
+  end
+  if (source == "MAIL_INBOX_UPDATE" and BankHelperFetchMails_index ~= -1) then
+    mailBoxItem = BankHelperGetHeaderInfo(BankHelperFetchMails_index);
+    if (not mailBoxItem.bodyText) then
+      mailBoxItem.bodyText, mailBoxItem.texture, mailBoxItem.isTakeable, mailBoxItem.isInvoice = GetInboxText(BankHelperFetchMails_index);
+    end
+     -- Get item infos (will generate an MAIL_INBOX_UPDATE?):
+    mailBoxItem.itemName, mailBoxItem.itemTexture, mailBoxItem.itemCount, mailBoxItem.itemQuality, mailBoxItem.itemCanUse = GetInboxItem(BankHelperFetchMails_index);
+    if (not mailBoxItem.itemName) then
+      -- mailBoxItem.itemName = UNKNOWN;
+      return;
+    end
+    BHPrint(string.format("Mail %d: Get [%s]x%d", BankHelperFetchMails_index, mailBoxItem.itemName, mailBoxItem.itemCount));
+
+    -- TakeInboxItem will generate an MAIL_INBOX_UPDATE or UI_ERROR_MESSAGE event
+    mailBoxItem.hasItem = 0;
+    BankHelperAddContrib(mailBoxItem);
+    BankHelperFetchMails_index = -1;
+    TakeInboxItem(BankHelperFetchMails_index);
+
+    -- TakeInboxMoney
+
+  elseif (source == "BUTTON" or source == "BAG_UPDATE") then
     local nMails = table.getn(MailBoxItems);
 
     if (source == "BAG_UPDATE") then
@@ -765,27 +821,22 @@ function BankHelperFetchMails(source)
       mailBoxItem = MailBoxItems[i];
       if (mailBoxItem.hasItem and mailBoxItem.CODAmount == 0 and not mailBoxItem.isGM) then
         local mailIndex = mailBoxItem.index;
-        -- Read message content (will generate an MAIL_INBOX_UPDATE):
-        mailBoxItem.bodyText, mailBoxItem.texture, mailBoxItem.isTakeable, mailBoxItem.isInvoice = GetInboxText(mailIndex);
-
-        -- Get item infos (will generate an MAIL_INBOX_UPDATE?):
-        mailBoxItem.itemName, mailBoxItem.itemTexture, mailBoxItem.itemCount, mailBoxItem.itemQuality, mailBoxItem.itemCanUse = GetInboxItem(mailIndex);
-        BHPrint(string.format("Mail %d/%d: Get [%s]x%d", mailIndex, nMails, mailBoxItem.itemName, mailBoxItem.itemCount));
-
-        -- TakeInboxItem will generate an MAIL_INBOX_UPDATE or UI_ERROR_MESSAGE event
-        mailBoxItem.hasItem = 0;
-        TakeInboxItem(mailIndex);
-
-        -- TakeInboxMoney
-        BankHelperAddContrib(mailBoxItem);
-        return; -- end here, wait for the BAG_UPDATE event
+        BankHelperFetchMails_index = mailIndex;
+        if (not mailBoxItem.wasRead) then
+          -- Read message content (will generate an MAIL_INBOX_UPDATE):
+          mailBoxItem.bodyText, mailBoxItem.texture, mailBoxItem.isTakeable, mailBoxItem.isInvoice = GetInboxText(mailIndex);
+          return; -- Wait for the MAIL_INBOX_UPDATE event
+        else
+          BankHelperFetchMails(MAIL_INBOX_UPDATE);
+          return;
+        end
       end
     end
     -- No item to recover
     MailBoxStatus = MAILBOX_OPEN;
     BankHelperFetchMailButton:Enable();
     BankHelperOnInboxUpdate();
-  elseif (MailBoxStatus == MAILBOX_RECOVER and source == "UI_ERROR_MESSAGE") then
+  elseif (source == "UI_ERROR_MESSAGE") then
     BHPrint("Error recovering all mails items");
     MailBoxStatus = MAILBOX_OPEN;
     BankHelperFetchMailButton:Enable();

@@ -2,7 +2,7 @@
 ## Title: BankHelper 0.1.0
 ## DefaultState: enabled
 ## Notes: Aide à la gestion de la banque de guilde
-## SavedVariables: BanksItems, BanksContributors
+## SavedVariables: BankHelperDatas
 ## Version 0.1.0
 ## Author: Aisselle
 bankhelper.xml
