@@ -5,7 +5,7 @@ end
 -- Global constants:
 BANKHELPER_ITEM_SCROLLFRAME_HEIGHT = 37;
 
-local BANKHELPER_VAR_VERSION = 1;
+local BANKHELPER_VAR_VERSION = 2;
 
 local BANKITEMS_TO_DISPLAY = 7;
 local MAILITEMS_TO_DISPLAY = 6;
@@ -164,6 +164,10 @@ function BankHelperOnEvent(event)
     if (not BankHelperDatas["contribs"]) then
       BankHelperDatas["contribs"] = {};
     end
+    if (not BankHelperDatas["options"]) then
+      BankHelperDatas["options"] = {};
+      BankHelperDatas["options"]["save_equip_items"] = true;
+    end
     if (not BankHelperDatas["players"][PlayerName]) then
       playerData = {};
     else
@@ -272,6 +276,7 @@ function BankHelperOnOpenBankFrame()
     "TRINKET0SLOT", "TRINKET1SLOT", "WAISTSLOT", "WRISTSLOT"};
 
   BankHelperDatas["players"][PlayerName]["numItems"] = 0;
+  BankHelperDatas["players"][PlayerName]["last_update"] = time();
   BankHelperDatas["players"][PlayerName]["old_items"] = BankHelperDatas["players"][PlayerName]["items"];
   BankHelperDatas["players"][PlayerName]["items"] = {};
 
@@ -289,14 +294,16 @@ function BankHelperOnOpenBankFrame()
   end
 
   -- Take the equip items too:
-  nSlots = table.getn(itemSlots);
-  for i = 1, nSlots, 1 do
-    local slotId, textureName;
-    slotId, textureName = GetInventorySlotInfo(itemSlots[i]);
-    itemLink = GetInventoryItemLink("player", slotId);
-    itemId = GetItemID(itemLink);
-    if (itemId ~= 0) then
-      BankHelperAddItem(itemId, itemsCount, 1);
+  if (BankHelperDatas["options"]["save_equip_items"]) then
+    nSlots = table.getn(itemSlots);
+    for i = 1, nSlots, 1 do
+      local slotId, textureName;
+      slotId, textureName = GetInventorySlotInfo(itemSlots[i]);
+      itemLink = GetInventoryItemLink("player", slotId);
+      itemId = GetItemID(itemLink);
+      if (itemId ~= 0) then
+        BankHelperAddItem(itemId, itemsCount, 1);
+      end
     end
   end
 
