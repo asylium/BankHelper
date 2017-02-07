@@ -155,9 +155,6 @@ function BankHelperOnEvent(event)
       BankHelperDatas["locale"] = GetLocale();
     end
 
-    if (not BankHelperDatas["compte"]) then
-      BankHelperDatas["compte"] = "";
-    end
     if (not BankHelperDatas["players"]) then
       BankHelperDatas["players"] = {};
     end
@@ -166,7 +163,9 @@ function BankHelperOnEvent(event)
     end
     if (not BankHelperDatas["options"]) then
       BankHelperDatas["options"] = {};
-      BankHelperDatas["options"]["save_equip_items"] = true;
+      BankHelperDatas["options"]["save_equip_items"] = false;
+      BankHelperDatas["options"]["compte"] = "";
+      BankHelperDatas["options"]["guilde"] = "";
     end
     if (not BankHelperDatas["players"][PlayerName]) then
       playerData = {};
