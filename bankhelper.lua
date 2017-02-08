@@ -5,7 +5,7 @@ end
 -- Global constants:
 BANKHELPER_ITEM_SCROLLFRAME_HEIGHT = 37;
 
-local BANKHELPER_VAR_VERSION = 2;
+local BANKHELPER_VAR_VERSION = 3;
 
 local BANKITEMS_TO_DISPLAY = 7;
 local MAILITEMS_TO_DISPLAY = 6;
@@ -147,9 +147,15 @@ function BankHelperOnEvent(event)
     PlayerName = UnitName("player") .. "@" .. GetRealmName();
 
     -- Init
-    if (not BankHelperDatas or not BankHelperDatas["version"] or BankHelperDatas["version"] ~= BANKHELPER_VAR_VERSION) then
+    if (not BankHelperDatas or not BankHelperDatas["version"]) then
       BankHelperDatas = {};
       BankHelperDatas["version"] = BANKHELPER_VAR_VERSION;
+    elseif (BankHelperDatas["version"] ~= BANKHELPER_VAR_VERSION) then
+      -- Migrate save format, to not loose everything
+      if (BankHelperDatas["version"] < 3) then
+        BankHelperDatas["options"] = nil;
+        BankHelperDatas["compte"]  = nil;
+      end
     end
     if (not BankHelperDatas["locale"]) then
       BankHelperDatas["locale"] = GetLocale();
@@ -166,6 +172,9 @@ function BankHelperOnEvent(event)
       BankHelperDatas["options"]["save_equip_items"] = false;
       BankHelperDatas["options"]["compte"] = "";
       BankHelperDatas["options"]["guilde"] = "";
+      BankHelperDatas["options"]["save_contrib"] = true;
+      BankHelperDatas["options"]["contrib_send"] = false;
+      BHPrint("Please configure your account and guilde name", 0.8, 0.8, 0.2);
     end
     if (not BankHelperDatas["players"][PlayerName]) then
       playerData = {};
@@ -194,6 +203,10 @@ function BankHelperOnEvent(event)
       local moneyPrev = playerData["money"];
       BHPrint(string.format("Player money changed since last connection: %d -> %d (difference = %d)", moneyPrev, money, (money - moneyPrev)));
       playerData["money"] = money;
+    end
+    if (BankHelperDatas["options"]["contrib_send"]) then
+      BankHelperDatas["prev_contribs"] = BankHelperDatas["contribs"];
+      BankHelperDatas["contribs"] = {};
     end
 
     BankHelperDatas["players"][PlayerName] = playerData;
@@ -801,6 +814,7 @@ function BankHelperFetchMails(source)
     mailBoxItem.itemName, mailBoxItem.itemTexture, mailBoxItem.itemCount, mailBoxItem.itemQuality, mailBoxItem.itemCanUse = GetInboxItem(BankHelperFetchMails_index);
     if (not mailBoxItem.itemName) then
       -- mailBoxItem.itemName = UNKNOWN;
+      BHPrint("BankHelperFetchMails: GetInboxItem wait for MAIL_INBOX_UPDATE");
       return;
     end
     BHPrint(string.format("Mail %d: Get [%s]x%d", BankHelperFetchMails_index, mailBoxItem.itemName, mailBoxItem.itemCount));
@@ -810,7 +824,7 @@ function BankHelperFetchMails(source)
     BankHelperAddContrib(mailBoxItem);
     BankHelperFetchMails_index = -1;
     TakeInboxItem(BankHelperFetchMails_index);
-
+    BHPrint("BankHelperFetchMails: TakeInboxItem wait for BAG_UPDATE");
     -- TakeInboxMoney
 
   elseif (source == "BUTTON" or source == "BAG_UPDATE") then
@@ -831,6 +845,7 @@ function BankHelperFetchMails(source)
         if (not mailBoxItem.wasRead) then
           -- Read message content (will generate an MAIL_INBOX_UPDATE):
           mailBoxItem.bodyText, mailBoxItem.texture, mailBoxItem.isTakeable, mailBoxItem.isInvoice = GetInboxText(mailIndex);
+          BHPrint("BankHelperFetchMails: GetInboxText wait for MAIL_INBOX_UPDATE");
           return; -- Wait for the MAIL_INBOX_UPDATE event
         else
           BankHelperFetchMails(MAIL_INBOX_UPDATE);
