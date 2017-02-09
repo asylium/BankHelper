@@ -153,9 +153,19 @@ function BankHelperOnEvent(event)
     elseif (BankHelperDatas["version"] ~= BANKHELPER_VAR_VERSION) then
       -- Migrate save format, to not loose everything
       if (BankHelperDatas["version"] < 3) then
-        BankHelperDatas["options"] = nil;
+        local save_equip_items = BankHelperDatas["options"]["save_equip_items"];
+        local compte = BankHelperDatas["compte"];
+        local guilde = BankHelperDatas["guilde"];
         BankHelperDatas["compte"]  = nil;
+        BankHelperDatas["options"] = {};
+        BankHelperDatas["options"]["save_equip_items"] = save_equip_items;
+        BankHelperDatas["options"]["compte"] = compte;
+        BankHelperDatas["options"]["guilde"] = guilde;
+        BankHelperDatas["options"]["save_contrib"] = true;
+        BankHelperDatas["options"]["contrib_send"] = false;
+
       end
+      BankHelperDatas["version"] = BANKHELPER_VAR_VERSION;
     end
     if (not BankHelperDatas["locale"]) then
       BankHelperDatas["locale"] = GetLocale();
@@ -193,6 +203,9 @@ function BankHelperOnEvent(event)
     end
     if (not playerData["numItems"]) then
       playerData["numItems"] = 0;
+    end
+    if (not playerData["last_update"]) then
+      playerData["last_update"] = 0;
     end
     if (not playerData["items"]) then
       playerData["items"] = {};
