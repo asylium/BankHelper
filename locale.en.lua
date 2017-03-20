@@ -16,6 +16,7 @@ BH_UI_TAB_OPTIONS = "Options";
 BH_UI_MAIL_DAYS_LEFT = "%d day(s) left";
 BH_UI_MAIL_RECV_DATE = "%s %d/%d/%d %d:%d";
 BH_UI_MAIL_RECOVER = "Recover";
+BH_UI_MAIL_UPDATE = "Update";
 
 -- Item quality
 BH_QUALITY = {};

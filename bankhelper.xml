@@ -600,6 +600,23 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </OnClick>
             </Scripts>
           </Button>
+          <Button name="BankHelperFetchMailButton" inherits="UIPanelButtonTemplate" text="BH_UI_MAIL_UPDATE">
+            <Size>
+              <AbsDimension x="100" y="22"/>
+            </Size>
+            <Anchors>
+              <Anchor point="TOPLEFT" relativePoint="TOPLEFT">
+                <Offset>
+                  <AbsDimension x="112" y="-45"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnClick>
+                BankHelperOnInboxUpdate();
+              </OnClick>
+            </Scripts>
+          </Button>
           <ScrollFrame name="BankHelperMailScrollFrame" inherits="FauxScrollFrameTemplate">
             <Size>
               <AbsDimension x="296" y="280"/>
