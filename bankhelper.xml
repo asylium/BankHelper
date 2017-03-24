@@ -580,7 +580,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
         </Frames>
       </Frame>
 
-       <!-- Tab contributions (mails) -->
+       <!-- Tab mails -->
       <Frame name="BankHelperMailFrame" setAllPoints="true">
         <Frames>
           <Button name="BankHelperFetchMailButton" inherits="UIPanelButtonTemplate" text="BH_UI_MAIL_RECOVER">
@@ -726,6 +726,228 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
 
        <!-- Tab options -->
       <Frame name="BankHelperOptionsFrame" setAllPoints="true">
+        <Frames>
+          <EditBox name="BankHelperOptionAccount" letters="64" historyLines="0" autoFocus="false">
+            <Size>
+              <AbsDimension x="237" y="20"/>
+            </Size>
+            <Anchors>
+              <Anchor point="TOPLEFT">
+                <Offset>
+                  <AbsDimension x="80" y="-30"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="BACKGROUND">
+                <FontString inherits="GameFontNormal" text="BH_UI_OPT_ACCOUNT" justifyH="RIGHT">
+                  <Anchors>
+                    <Anchor point="RIGHT" relativePoint="LEFT">
+                      <Offset>
+                        <AbsDimension x="-12" y="0"/>
+                      </Offset>
+                    </Anchor>
+                  </Anchors>
+                </FontString>
+                <Texture name="$parentLeft" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="8" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="TOPLEFT">
+                      <Offset>
+                        <AbsDimension x="-8" y="0"/>
+                      </Offset>
+                    </Anchor>
+                  </Anchors>
+                  <TexCoords left="0" right="0.0625" top="0" bottom="0.625"/>
+                </Texture>
+                <Texture name="$parentMiddle" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="221" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentLeft" relativePoint="RIGHT"/>
+                  </Anchors>
+                  <TexCoords left="0.0625" right="0.9375" top="0" bottom="0.625"/>
+                </Texture>
+                <Texture name="$parentRight" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="8" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentMiddle" relativePoint="RIGHT"/>
+                  </Anchors>
+                  <TexCoords left="0.9375" right="1.0" top="0" bottom="0.625"/>
+                </Texture>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnTextChanged>
+                BankHelperDatas["options"]["compte"] = BankHelperOptionAccount:GetText();
+              </OnTextChanged>
+            </Scripts>
+            <FontString inherits="ChatFontNormal"/>
+          </EditBox>
+          <EditBox name="BankHelperOptionGuild" letters="64" historyLines="0" autoFocus="false">
+            <Size>
+              <AbsDimension x="237" y="20"/>
+            </Size>
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="BankHelperOptionAccount" relativePoint="BOTTOMLEFT">
+                <Offset>
+                  <AbsDimension x="0" y="-6"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="BACKGROUND">
+                <FontString inherits="GameFontNormal" text="BH_UI_OPT_GUILD" justifyH="RIGHT">
+                  <Anchors>
+                    <Anchor point="RIGHT" relativePoint="LEFT">
+                      <Offset>
+                        <AbsDimension x="-12" y="0"/>
+                      </Offset>
+                    </Anchor>
+                  </Anchors>
+                </FontString>
+                <Texture name="$parentLeft" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="8" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="TOPLEFT">
+                      <Offset>
+                        <AbsDimension x="-8" y="0"/>
+                      </Offset>
+                    </Anchor>
+                  </Anchors>
+                  <TexCoords left="0" right="0.0625" top="0" bottom="0.625"/>
+                </Texture>
+                <Texture name="$parentMiddle" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="221" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentLeft" relativePoint="RIGHT"/>
+                  </Anchors>
+                  <TexCoords left="0.0625" right="0.9375" top="0" bottom="0.625"/>
+                </Texture>
+                <Texture name="$parentRight" file="Interface\Common\Common-Input-Border">
+                  <Size>
+                    <AbsDimension x="8" y="20"/>
+                  </Size>
+                  <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentMiddle" relativePoint="RIGHT"/>
+                  </Anchors>
+                  <TexCoords left="0.9375" right="1.0" top="0" bottom="0.625"/>
+                </Texture>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnTextChanged>
+                BankHelperDatas["options"]["guilde"] = BankHelperOptionGuild:GetText();
+              </OnTextChanged>
+            </Scripts>
+            <FontString inherits="ChatFontNormal"/>
+          </EditBox>
+          <CheckButton name="BankHelperOptionSaveEquip" inherits="UICheckButtonTemplate" virtual="true">
+            <Size x="20" y="20" />
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="BankHelperOptionGuild" relativePoint="BOTTOMLEFT">
+                <Offset>
+                  <AbsDimension x="-65" y="-6"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Title" inherits="GameFontNormalSmall" justifyH="LEFT" justifyV="CENTER" text="BH_UI_OPT_SAVEEQUIP">
+                  <Size x="180" y="20" />
+                  <Anchors>
+                    <Anchor point="LEFT">
+                      <Offset x="20" y="0" />
+                    </Anchor>
+                  </Anchors>
+                  <Color r="1" g="1" b="1" />
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnClick>
+                if this:GetChecked() then
+                  BankHelperDatas["options"]["save_equip_items"] = true;
+                else
+                  BankHelperDatas["options"]["save_equip_items"] = false;
+                end
+              </OnClick>
+            </Scripts>
+          </CheckButton>
+          <CheckButton name="BankHelperOptionSaveContrib" inherits="UICheckButtonTemplate" virtual="true">
+            <Size x="20" y="20" />
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="BankHelperOptionSaveEquip" relativePoint="BOTTOMLEFT">
+                <Offset>
+                  <AbsDimension x="0" y="-6"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Title" inherits="GameFontNormalSmall" justifyH="LEFT" justifyV="CENTER" text="BH_UI_OPT_SAVECONTRIB">
+                  <Size x="180" y="20" />
+                  <Anchors>
+                    <Anchor point="LEFT">
+                      <Offset x="20" y="0" />
+                    </Anchor>
+                  </Anchors>
+                  <Color r="1" g="1" b="1" />
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnClick>
+                if this:GetChecked() then
+                  BankHelperDatas["options"]["save_contrib"] = true;
+                else
+                  BankHelperDatas["options"]["save_contrib"] = false;
+                end
+              </OnClick>
+            </Scripts>
+          </CheckButton>
+          <CheckButton name="BankHelperOptionShowDebug" inherits="UICheckButtonTemplate" virtual="true">
+            <Size x="20" y="20" />
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="BankHelperOptionSaveContrib" relativePoint="BOTTOMLEFT">
+                <Offset>
+                  <AbsDimension x="0" y="-6"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Layers>
+              <Layer level="ARTWORK">
+                <FontString name="$parent_Title" inherits="GameFontNormalSmall" justifyH="LEFT" justifyV="CENTER" text="BH_UI_OPT_DEBUG">
+                  <Size x="180" y="20" />
+                  <Anchors>
+                    <Anchor point="LEFT">
+                      <Offset x="20" y="0" />
+                    </Anchor>
+                  </Anchors>
+                  <Color r="1" g="1" b="1" />
+                </FontString>
+              </Layer>
+            </Layers>
+            <Scripts>
+              <OnClick>
+                if this:GetChecked() then
+                  BankHelperDatas["options"]["debug"] = true;
+                else
+                  BankHelperDatas["options"]["debug"] = false;
+                end
+              </OnClick>
+            </Scripts>
+          </CheckButton>
+        </Frames>
       </Frame>
 
       <Frame name="BankHelperTabBar">
@@ -766,7 +988,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </OnClick>
             </Scripts>
           </Button>
-          <Button name="BankHelperTabBarTab2" inherits="TabButtonTemplate" text="BH_UI_TAB_CONTRIB" id="2">
+          <Button name="BankHelperTabBarTab2" inherits="TabButtonTemplate" text="BH_UI_TAB_MAIL" id="2">
             <Anchors>
               <Anchor point="LEFT" relativeTo="BankHelperTabBarTab1" relativePoint="RIGHT">
                 <Offset>
@@ -829,6 +1051,9 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
       <OnUpdate>
         BankHelperOnUpdate(arg1);
       </OnUpdate>
+      <OnEscapePressed>
+        HideUIPanel(BankHelperUIFrame);
+      </OnEscapePressed>
     </Scripts>
   </Frame>
 </Ui>

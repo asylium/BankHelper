@@ -181,6 +181,11 @@ local function BHInitData()
     BankHelperDatas["version"] = 4;
   end
 
+  if (BankHelperDatas["version"] < 5) then
+    BankHelperDatas["options"]["ignore_contributors"] = {};
+    table.insert(BankHelperDatas["options"]["ignore_contributors"], "Hôtel des ventes de Stormwind");
+  end
+
   if (BANKHELPER_VAR_VERSION ~= BankHelperDatas["version"]) then
     BHPrint("Error in BankHelperDatas version", 1.0, 0.0, 0.0);
   end
@@ -231,6 +236,7 @@ end
 
 function BankHelperOnLoad()
   this:RegisterEvent("PLAYER_ENTERING_WORLD");
+  this:RegisterEvent("VARIABLES_LOADED");
   this:RegisterEvent("BANKFRAME_OPENED");
   this:RegisterEvent("BANKFRAME_CLOSED");
   this:RegisterEvent("MAIL_SHOW");
@@ -250,6 +256,12 @@ function BankHelperOnEvent(event)
   if (event == "PLAYER_ENTERING_WORLD") then
     PlayerName = UnitName("player") .. "@" .. GetRealmName();
     BHInitData();
+  elseif (event == "VARIABLES_LOADED") then
+    BankHelperOptionSaveEquip:SetChecked(BankHelperDatas["options"]["save_equip_items"]);
+    BankHelperOptionSaveContrib:SetChecked(BankHelperDatas["options"]["save_contrib"]);
+    BankHelperOptionShowDebug:SetChecked(BankHelperDatas["options"]["debug"]);
+    BankHelperOptionAccount:SetText(BankHelperDatas["options"]["compte"]);
+    BankHelperOptionGuild:SetText(BankHelperDatas["options"]["guilde"]);
   elseif (event == "BANKFRAME_OPENED") then
     BankHelperOnOpenBankFrame();
   elseif (event == "BANKFRAME_CLOSED") then
@@ -724,7 +736,7 @@ function BankHelperOnInboxUpdate()
   local mailBoxItems = {};
 
   if (MailBoxStatus ~= MAILBOX_OPEN) then
-    BHPrint(string.format("BankHelperOnInboxUpdate: Invalid MailBoxStatus(%d) ~= MAILBOX_OPEN(%d)", MailBoxStatus, MAILBOX_OPEN));
+    LogDebug(string.format("BankHelperOnInboxUpdate: Invalid MailBoxStatus(%d) ~= MAILBOX_OPEN(%d)", MailBoxStatus, MAILBOX_OPEN));
     if (MailBoxStatus == MAILBOX_CLOSE) then
       MailBoxStatus = MAILBOX_CLOSE_NEED_UPDATE;
     end
@@ -812,6 +824,22 @@ function BankHelperFetchMailButtonOnClick()
 end
 
 function BankHelperAddContrib(mailBoxItem)
+
+  if (not BankHelperDatas["options"]["save_contrib"]) then
+    -- Do not save contributions on this account
+    return;
+  end
+
+  -- Check the ignore list
+  local nIgnore = table.getn(BankHelperDatas["options"]["ignore_contributors"]);
+  local i;
+  for i = 1, nIgnore, 1 do
+    if (mailBoxItem.sender == BankHelperDatas["options"]["ignore_contributors"][i]) then
+      -- Contributor is in the ignore list, so do nothing
+      return;
+    end
+  end
+
   local contrib = {};
   contrib.sender = mailBoxItem.sender;
   contrib.to = PlayerName;

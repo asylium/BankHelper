@@ -12,12 +12,18 @@ if (GetLocale() == "frFR") then
   BH_UI_LEVEL = "Niv";
   BH_UI_QUANTITY = "Nb";
   BH_UI_TAB_BANK = "Banque";
+  BH_UI_TAB_MAIL = "Courriers";
   BH_UI_TAB_CONTRIB = "Contrib.";
   BH_UI_TAB_OPTIONS = "Options";
   BH_UI_MAIL_DAYS_LEFT = "%d jour(s) restant";
   BH_UI_MAIL_RECV_DATE = "%s %d/%d/%d %d:%d";
   BH_UI_MAIL_RECOVER = "Récupérer";
   BH_UI_MAIL_UPDATE = "Mise à jour";
+  BH_UI_OPT_ACCOUNT = "Compte:";
+  BH_UI_OPT_GUILD = "Guilde:";
+  BH_UI_OPT_SAVEEQUIP = "Sauvegarder l'équipement équipé";
+  BH_UI_OPT_DEBUG = "Afficher les messages de debug";
+  BH_UI_OPT_SAVECONTRIB = "Enregistrer les contributions";
 
   -- Item quality
   BH_QUALITY = {};
