@@ -299,37 +299,33 @@ end -- BankHelperOnEvent()
 --  parsing
 function BankHelperAddItem(itemId, itemsCount, count)
   local itemLink, itemName, itemQuality, itemLevel, itemType, itemSubtype, itemTexture;
-  local itemIdStr;
-
   itemName, itemLink, itemQuality, itemLevel, itemType, itemSubtype, _, _, itemTexture = GetItemInfo(itemId);
-  itemIdStr = string.format("%d", itemId);
 
-  if (not itemsCount[itemIdStr]) then
-    itemsCount[itemIdStr] = 0;
+  if (not itemsCount[itemId]) then
+    itemsCount[itemId] = 0;
     BankHelperDatas["players"][PlayerName]["numItems"] = BankHelperDatas["players"][PlayerName]["numItems"] + 1;
   end
 
-  if (not BankHelperDatas["items"][itemIdStr]) then
-    BankHelperDatas["items"][itemIdStr] = {};
-    BankHelperDatas["items"][itemIdStr]["name"] = itemName;
-    BankHelperDatas["items"][itemIdStr]["wow_link"] = itemLink;
-    BankHelperDatas["items"][itemIdStr]["texture"] = itemTexture;
-    BankHelperDatas["items"][itemIdStr]["level"] = itemLevel;
-    BankHelperDatas["items"][itemIdStr]["quality"] = itemQuality;
-    BankHelperDatas["items"][itemIdStr]["type"] = itemType;
-    BankHelperDatas["items"][itemIdStr]["subtype"] = itemSubtype;
+  if (not BankHelperDatas["items"][itemId]) then
+    BankHelperDatas["items"][itemId] = {};
+    BankHelperDatas["items"][itemId]["name"] = itemName;
+    BankHelperDatas["items"][itemId]["wow_link"] = itemLink;
+    BankHelperDatas["items"][itemId]["texture"] = itemTexture;
+    BankHelperDatas["items"][itemId]["level"] = itemLevel;
+    BankHelperDatas["items"][itemId]["quality"] = itemQuality;
+    BankHelperDatas["items"][itemId]["type"] = itemType;
+    BankHelperDatas["items"][itemId]["subtype"] = itemSubtype;
   end
-  if (not BankHelperDatas["players"][PlayerName]["items"][itemIdStr]) then
-    BankHelperDatas["players"][PlayerName]["items"][itemIdStr] = 0;
+  if (not BankHelperDatas["players"][PlayerName]["items"][itemId]) then
+    BankHelperDatas["players"][PlayerName]["items"][itemId] = 0;
   end
 
-  itemsCount[itemIdStr] = itemsCount[itemIdStr] + count;
-  BankHelperDatas["players"][PlayerName]["items"][itemIdStr] = itemsCount[itemIdStr];
+  itemsCount[itemId] = itemsCount[itemId] + count;
+  BankHelperDatas["players"][PlayerName]["items"][itemId] = itemsCount[itemId];
 end
 
 function BankHelperOnOpenBankFrame()
-  local itemLink, itemId, itemCount, nSlots;
-  local itemIdStr;
+  local itemLink, itemId, itemCount, slot, nSlots;
   local itemsCount = {};
   local itemSlots = {"BACKSLOT", "CHESTSLOT", "FEETSLOT", "FINGER0SLOT", "FINGER1SLOT", "HANDSSLOT", "HEADSLOT", "LEGSSLOT",
     "MAINHANDSLOT", "NECKSLOT", "RANGEDSLOT", "SECONDARYHANDSLOT", "SHIRTSLOT", "SHOULDERSLOT", "TABARDSLOT",
@@ -343,7 +339,8 @@ function BankHelperOnOpenBankFrame()
   -- BANK_CONTAINER = -1; -- Global variable already set in WoW API
   --Take the items in the bags:
   for bagID = BANK_CONTAINER, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS, 1 do
-    for slot = 1, GetContainerNumSlots(bagID) do
+    nSlots = GetContainerNumSlots(bagID);
+    for slot = 1, nSlots, 1 do
       itemLink = GetContainerItemLink(bagID, slot);
       if (itemLink) then
         _, itemCount = GetContainerItemInfo(bagID, slot);
@@ -805,6 +802,66 @@ function BankHelperFetchMailButtonOnClick()
   end
 end
 
+function BankHelperGetBagsItemsList()
+  local itemLink, itemCount, itemId, bagID, slot, nSlots;
+  local itemLink, itemName, itemQuality, itemLevel, itemType, itemSubtype, itemTexture;
+  local itemsList = {};
+
+  for bagID = 0, NUM_BAG_SLOTS, 1 do
+    nSlots = GetContainerNumSlots(bagID);
+    for slot = 1, nSlots, 1 do
+      itemLink = GetContainerItemLink(bagID, slot);
+      if (itemLink) then
+        _, itemCount = GetContainerItemInfo(bagID, slot);
+        itemId = GetItemID(itemLink);
+        itemName, itemLink, itemQuality, itemLevel, itemType, itemSubtype, _, _, itemTexture = GetItemInfo(itemId);
+        if (itemsList[itemId]) then
+          itemsList[itemId].count = itemsList[itemId].count + itemCount;
+        else
+          itemsList[itemId] = {}
+          itemsList[itemId].id = itemId;
+          itemsList[itemId].name = itemName;
+          itemsList[itemId].type = itemType;
+          itemsList[itemId].subtype = itemSubtype;
+          itemsList[itemId].count = itemCount;
+        end
+      end
+    end
+  end
+
+  return itemsList;
+end
+
+function BankHelperGetAddItemId(listA, listB)
+  if (not listA or not listB) then
+    LogDebug("BankHelperGetAddItemId(): Parameter error");
+    return 0;
+  end
+
+  local idA, itemInfoA;
+  local idB, itemInfoB;
+
+  for idB in pairs(listB) do
+    itemInfoB = listB[idB];
+    LogDebug(string.format("BankHelperGetAddItemId(): Search for [%s]x%d", idB, itemInfoB.count));
+    if (not listA[idB]) then
+      -- found, new item
+      return idB;
+    end
+
+    for idA in pairs(listA) do
+      itemInfoA = listA[idA];
+      if (idA == idB and itemInfoA.name == itemInfoB.name and itemInfoA.type == itemInfoB.type and itemInfoA.count ~= itemInfoB.count) then
+        -- found, existing item
+        return idB;
+      end
+    end
+  end
+
+  LogDebug("BankHelperGetAddItemId(): ItemId not found");
+  return 0;
+end
+
 function BankHelperAddContrib(mailBoxItem)
 
   if (not BankHelperDatas["options"]["save_contrib"]) then
@@ -838,9 +895,10 @@ function BankHelperAddContrib(mailBoxItem)
   contrib.isInvoice = mailBoxItem.isInvoice;
   contrib.mailIndex = mailBoxItem.index;
   contrib.itemTaken = mailBoxItem.itemTaken;
-  contrib.mailBoxItem = mailBoxItem;
+  contrib.itemId = mailBoxItem.itemId;
+  -- contrib.mailBoxItem = mailBoxItem;
   table.insert(BankHelperDatas["contribs"], contrib);
-  BHPrint(string.format("BankHelperAddContrib(): %s [%s]x%d", contrib.sender, contrib.itemName, contrib.itemCount));
+  BHPrint(string.format("Add contribution from %s: [%d][%s]x%d", contrib.sender, contrib.itemId, contrib.itemName, contrib.itemCount));
   return contrib;
 end
 
@@ -934,38 +992,28 @@ function BankHelperFetchMails(source)
       BankHelperOnInboxUpdate();
       MailBoxStatus = MAILBOX_RECOVER;
 
-      if (not bhfmMailBoxItem or bhfmMailBoxItem.itemTaken == false) then
-        LogDebug(string.format("BankHelperFetchMails(%s): END action=%s - Item not taken", source, bhfmAction), 0.8, 0.8, 0.0);
-        MailBoxStatus = MAILBOX_OPEN;
-      else
-        bhfmMailBoxItem = nil;
-        bhfmAction = "NONE";
-        BankHelperFetchMails("DO_NEXT_MAIL");
-      end
+      bhfmWaitDelay = 0;
+      bhfmAction = "WAIT_TIMER_DO_NEXT_MAIL";
     else
       LogDebug(string.format("BankHelperFetchMails(%s): END action=%s - Unexpected MAIL_INBOX_UPDATE event", source, bhfmAction), 0.8, 0.8, 0.0);
     end
   -- end source == "MAIL_INBOX_UPDATE"
   elseif (source == "BAG_UPDATE") then
     if (bhfmAction == "WAIT_BAG_UPDATE") then
-      LogDebug(string.format("  BankHelperFetchMails(%s): TODO", source), 0.5, 0.5, 0.5);
-      if (bhfmMailBoxItem and bhfmMailBoxItem.itemTaken == false) then
-        bhfmMailBoxItem.itemTaken = true;
-        BankHelperAddContrib(bhfmMailBoxItem);
-        if (bhfmMailBoxItem.noMessage) then
-          bhfmAction = "WAIT_ICON_MESSAGE_UPDATE_THEN_DELETE";
-        else
-          bhfmAction = "WAIT_ICON_MESSAGE_UPDATE";
-        end
+      if (bhfmMailBoxItem.noMessage) then
+        bhfmAction = "WAIT_ICON_MESSAGE_UPDATE_THEN_DELETE";
+      else
+        bhfmAction = "WAIT_ICON_MESSAGE_UPDATE";
       end
     end -- WAIT_BAG_UPDATE
   elseif (source == "UI_ERROR_MESSAGE") then
-    BHPrint(string.format("BankHelperFetchMails(%s): END action=%s - Error message, bags full?", source, bhfmAction), 0.8, 0.1, 0.1);
+    BHPrint(string.format("Error: bags full or unique item?"), 0.8, 0.1, 0.1);
     if (bhfmAction == "WAIT_BAG_UPDATE") then
+      bhfmAction = "NONE";
       MailBoxStatus = MAILBOX_OPEN;
     end
   elseif (source == "DO_DELETE_EMPTY_MAILS") then
-
+    -- TODO
   else
     BHPrint(string.format("BankHelperFetchMails(%s): END action=%s - Unexpected call", source, bhfmAction), 0.8, 0.8, 0.0);
   end -- if (source == "xx")
@@ -978,30 +1026,47 @@ function BankHelperOnUpdate(elapse)
     return;
   end
 
+  bhfmWaitDelay = bhfmWaitDelay + elapse;
+
+  if (bhfmWaitDelay < MAIL_ACTION_DELAY) then
+    -- wait MAIL_ACTION_DELAY seconds
+    return;
+  end
+
   if (bhfmAction == "WAIT_TIMER_TO_DELETE_MESSAGE") then
-    bhfmWaitDelay = bhfmWaitDelay + elapse;
-    -- wait MAIL_ACTION_DELAY seconds
-    if (bhfmWaitDelay > MAIL_ACTION_DELAY) then
-      local index = bhfmMailBoxItem.index;
-      local mailBoxItem = BankHelperGetHeaderInfo(index);
-      bhfmAction = "WAIT_MESSAGE_DELETE";
-      bhfmWaitDelay = 0;
-      if ((not mailBoxItem.hasItem or mailBoxItem.hasItem == 0) and mailBoxItem.money == 0) then
-        DeleteInboxItem(index);
-      else
-        BHPrint(string.format("  BankHelperOnUpdate(%s) - Error mail %d as an item or money", bhfmAction, index), 0.8, 0.8, 0.8);
-        MailBoxStatus = MAILBOX_OPEN;
-      end
+    local index = bhfmMailBoxItem.index;
+    local mailBoxItem = BankHelperGetHeaderInfo(index);
+
+    bhfmAction = "WAIT_MESSAGE_DELETE";
+    bhfmWaitDelay = 0;
+    if ((not mailBoxItem.hasItem or mailBoxItem.hasItem == 0) and mailBoxItem.money == 0) then
+      DeleteInboxItem(index);
+    else
+      BHPrint(string.format("  BankHelperOnUpdate(%s) - Error mail %d as an item or money", bhfmAction, index), 0.8, 0.8, 0.8);
+      MailBoxStatus = MAILBOX_OPEN;
     end
+
   elseif (bhfmAction == "WAIT_TIMER_TAKE_ITEM") then
-    bhfmWaitDelay = bhfmWaitDelay + elapse;
-    -- wait MAIL_ACTION_DELAY seconds
-    if (bhfmWaitDelay > MAIL_ACTION_DELAY) then
-      local index = bhfmMailBoxItem.index;
-      bhfmMailBoxItem.itemName, bhfmMailBoxItem.itemTexture, bhfmMailBoxItem.itemCount, bhfmMailBoxItem.itemQuality, bhfmMailBoxItem.itemCanUse = GetInboxItem(index);
-      bhfmAction = "WAIT_BAG_UPDATE";
-      bhfmMailBoxItem.itemTaken = false;
-      TakeInboxItem(index);
+    local index = bhfmMailBoxItem.index;
+    bhfmMailBoxItem.itemName, bhfmMailBoxItem.itemTexture, bhfmMailBoxItem.itemCount, bhfmMailBoxItem.itemQuality, bhfmMailBoxItem.itemCanUse = GetInboxItem(index);
+    bhfmAction = "WAIT_BAG_UPDATE";
+    bhfmMailBoxItem.itemTaken = false;
+    bhfmMailBoxItem.itemsBagsPreTake = BankHelperGetBagsItemsList();
+    TakeInboxItem(index);
+
+  elseif (bhfmAction == "WAIT_TIMER_DO_NEXT_MAIL") then
+    if (bhfmMailBoxItem.itemTaken == false) then
+      bhfmMailBoxItem.itemTaken = true;
+      bhfmMailBoxItem.itemsBagsPostTake = BankHelperGetBagsItemsList();
+      bhfmMailBoxItem.itemId = BankHelperGetAddItemId(bhfmMailBoxItem.itemsBagsPreTake, bhfmMailBoxItem.itemsBagsPostTake);
+      if (bhfmMailBoxItem.itemId == 0) then
+        BHPrint(string.format("Item ID for %s not found", bhfmMailBoxItem.itemName), 1.0, 0.1, 0.8);
+      end
+      BankHelperAddContrib(bhfmMailBoxItem);
     end
+
+    bhfmMailBoxItem = nil;
+    bhfmAction = "NONE";
+    BankHelperFetchMails("DO_NEXT_MAIL");
   end
 end
