@@ -19,6 +19,7 @@ if (GetLocale() == "frFR") then
   BH_UI_MAIL_RECV_DATE = "%s %d/%d/%d %d:%d";
   BH_UI_MAIL_RECOVER = "Récupérer";
   BH_UI_MAIL_UPDATE = "Mise à jour";
+  BH_UI_SAVE_RESET = "Enregistrer";
   BH_UI_OPT_ACCOUNT = "Compte:";
   BH_UI_OPT_GUILD = "Guilde:";
   BH_UI_OPT_SAVEEQUIP = "Sauvegarder l'équipement équipé";

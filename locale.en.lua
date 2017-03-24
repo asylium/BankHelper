@@ -18,6 +18,7 @@ BH_UI_MAIL_DAYS_LEFT = "%d day(s) left";
 BH_UI_MAIL_RECV_DATE = "%s %d/%d/%d %d:%d";
 BH_UI_MAIL_RECOVER = "Recover";
 BH_UI_MAIL_UPDATE = "Update";
+BH_UI_SAVE_RESET = "Save";
 BH_UI_OPT_ACCOUNT = "Account:";
 BH_UI_OPT_GUILD = "Guild:";
 BH_UI_OPT_SAVEEQUIP = "Save equip items";

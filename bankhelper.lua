@@ -125,7 +125,7 @@ local function LogDebug(msg, r, g, b)
 end
 
 -- Return the item ID from the item link
-function GetItemID(itemLink)
+local function GetItemID(itemLink)
   local id, itemId;
   itemId = 0;
 
@@ -257,11 +257,13 @@ function BankHelperOnEvent(event)
     PlayerName = UnitName("player") .. "@" .. GetRealmName();
     BHInitData();
   elseif (event == "VARIABLES_LOADED") then
-    BankHelperOptionSaveEquip:SetChecked(BankHelperDatas["options"]["save_equip_items"]);
-    BankHelperOptionSaveContrib:SetChecked(BankHelperDatas["options"]["save_contrib"]);
-    BankHelperOptionShowDebug:SetChecked(BankHelperDatas["options"]["debug"]);
-    BankHelperOptionAccount:SetText(BankHelperDatas["options"]["compte"]);
-    BankHelperOptionGuild:SetText(BankHelperDatas["options"]["guilde"]);
+    if (BankHelperDatas["options"]) then
+      BankHelperOptionSaveEquip:SetChecked(BankHelperDatas["options"]["save_equip_items"]);
+      BankHelperOptionSaveContrib:SetChecked(BankHelperDatas["options"]["save_contrib"]);
+      BankHelperOptionShowDebug:SetChecked(BankHelperDatas["options"]["debug"]);
+      BankHelperOptionAccount:SetText(BankHelperDatas["options"]["compte"]);
+      BankHelperOptionGuild:SetText(BankHelperDatas["options"]["guilde"]);
+    end
   elseif (event == "BANKFRAME_OPENED") then
     BankHelperOnOpenBankFrame();
   elseif (event == "BANKFRAME_CLOSED") then
@@ -377,7 +379,7 @@ function BankHelperOnCloseBankFrame()
 end -- BankHelperOnCloseBankFrame()
 
 -- Sort function
-function BankHelperCharacterSort(a, b)
+local function BankHelperCharacterSort(a, b)
   return a["name"] < b["name"];
 end
 function BankHelperCharacterDropDownOnLoad(level)
@@ -668,7 +670,7 @@ function BankHelperOnCloseMailFrame()
   MailBoxStatus = MAILBOX_CLOSE;
 end -- BankHelperOnCloseMailFrame()
 
-function BankHelperGetHeaderInfo(index)
+local function BankHelperGetHeaderInfo(index)
   local packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, hasItem, wasRead, wasReturned, noMessage, canReply, isGM = GetInboxHeaderInfo(index);
   local mailBoxItem = {};
 
@@ -896,6 +898,7 @@ function BankHelperAddContrib(mailBoxItem)
   contrib.mailIndex = mailBoxItem.index;
   contrib.itemTaken = mailBoxItem.itemTaken;
   contrib.itemId = mailBoxItem.itemId;
+  contrib.money = mailBoxItem.money;
   -- contrib.mailBoxItem = mailBoxItem;
   table.insert(BankHelperDatas["contribs"], contrib);
   BHPrint(string.format("Add contribution from %s: [%d][%s]x%d", contrib.sender, contrib.itemId, contrib.itemName, contrib.itemCount));
@@ -922,7 +925,6 @@ function BankHelperFetchMails(source)
     if (source == "BUTTON") then
       bhfmMailBoxItem = nil;
       bhfmAction = "NONE";
-      bhfmDeleteIndexes = {};
       MailBoxStatus = MAILBOX_OPEN;
       bhfmMailBoxItems = BankHelperOnInboxUpdate();
       MailBoxStatus = MAILBOX_RECOVER;
@@ -962,7 +964,6 @@ function BankHelperFetchMails(source)
 
     MailBoxStatus = MAILBOX_OPEN;
     bhfmAction = "NONE";
-    bhfmDeleteIndexes = {};
     bhfmMailBoxItem = nil;
     BankHelperOnInboxUpdate();
 

@@ -600,20 +600,37 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
               </OnClick>
             </Scripts>
           </Button>
-          <Button name="BankHelperFetchMailButton" inherits="UIPanelButtonTemplate" text="BH_UI_MAIL_UPDATE">
+          <Button name="BankHelperUpdateMailButton" inherits="UIPanelButtonTemplate" text="BH_UI_MAIL_UPDATE">
             <Size>
               <AbsDimension x="100" y="22"/>
             </Size>
             <Anchors>
-              <Anchor point="TOPLEFT" relativePoint="TOPLEFT">
+              <Anchor point="TOPLEFT" relativeTo="BankHelperFetchMailButton" relativePoint="TOPRIGHT">
                 <Offset>
-                  <AbsDimension x="112" y="-45"/>
+                  <AbsDimension x="6" y="0"/>
                 </Offset>
               </Anchor>
             </Anchors>
             <Scripts>
               <OnClick>
                 BankHelperOnInboxUpdate();
+              </OnClick>
+            </Scripts>
+          </Button>
+          <Button name="BankHelperSaveButton" inherits="UIPanelButtonTemplate" text="BH_UI_SAVE_RESET">
+            <Size>
+              <AbsDimension x="100" y="22"/>
+            </Size>
+            <Anchors>
+              <Anchor point="TOPLEFT" relativeTo="BankHelperUpdateMailButton" relativePoint="TOPRIGHT">
+                <Offset>
+                  <AbsDimension x="6" y="0"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+            <Scripts>
+              <OnClick>
+                ReloadUI();
               </OnClick>
             </Scripts>
           </Button>
