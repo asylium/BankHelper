@@ -222,6 +222,7 @@ local function BHInitData()
 
   if (BankHelperDatas["options"]["contrib_send"]) then
     BankHelperDatas["prev_contribs"] = BankHelperDatas["contribs"];
+    BankHelperDatas["options"]["contrib_send"] = false;
     BankHelperDatas["contribs"] = {};
   end
 
@@ -265,14 +266,12 @@ function BankHelperOnEvent(event)
     if (MailBoxStatus == MAILBOX_RECOVER) then
       BankHelperFetchMails(event);
     else
-      BankHelperOnInboxUpdate();
-      -- local currentTime = time();
-      -- -- Prevent too many update when opening the mail box
-      -- if (currentTime > LastUpdateMailboxTime) then
-      --   -- BHPrint(string.format("MAIL_INBOX_UPDATE: %d -> %d", LastUpdateMailboxTime, currentTime));
-      --   BankHelperOnInboxUpdate();
-      --   LastUpdateMailboxTime = currentTime;
-      -- end
+      local currentTime = time();
+      -- Prevent too many update when opening the mail box
+      if (currentTime > LastUpdateMailboxTime) then
+        BankHelperOnInboxUpdate();
+        LastUpdateMailboxTime = currentTime;
+      end
     end
   elseif (event == "UI_ERROR_MESSAGE" and MailBoxStatus == MAILBOX_RECOVER) then
     BankHelperFetchMails(event);
@@ -942,6 +941,7 @@ function BankHelperFetchMails(source)
       LogDebug(string.format("  BankHelperFetchMails(%s): TODO", source), 0.5, 0.5, 0.5);
       if (bhfmMailBoxItem and bhfmMailBoxItem.itemTaken == false) then
         bhfmMailBoxItem.itemTaken = true;
+        BankHelperAddContrib(bhfmMailBoxItem);
         if (bhfmMailBoxItem.noMessage) then
           bhfmAction = "WAIT_ICON_MESSAGE_UPDATE_THEN_DELETE";
         else
@@ -991,7 +991,6 @@ function BankHelperOnUpdate(elapse)
       bhfmMailBoxItem.itemName, bhfmMailBoxItem.itemTexture, bhfmMailBoxItem.itemCount, bhfmMailBoxItem.itemQuality, bhfmMailBoxItem.itemCanUse = GetInboxItem(index);
       bhfmAction = "WAIT_BAG_UPDATE";
       bhfmMailBoxItem.itemTaken = false;
-      BankHelperAddContrib(bhfmMailBoxItem);
       TakeInboxItem(index);
     end
   end
