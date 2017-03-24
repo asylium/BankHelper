@@ -87,7 +87,7 @@ local function TimeToStr(val)
 
   t_year = year;
   t_month = 1;
-  -- BHPrint(string.format("leapyear(%d)=%s", year, leapyear(year)));
+
   while (dayno >= YTAB[leapyear(year) + 1][t_month]) do
     dayno = dayno - YTAB[leapyear(year) + 1][t_month];
     t_month = t_month + 1;
@@ -303,7 +303,6 @@ function BankHelperAddItem(itemId, itemsCount, count)
 
   itemName, itemLink, itemQuality, itemLevel, itemType, itemSubtype, _, _, itemTexture = GetItemInfo(itemId);
   itemIdStr = string.format("%d", itemId);
-  -- BHPrint(string.format(" Slot %d: %s = %sx%d - lvl %d - Texture %s", slot, itemId, itemLink, itemCount, itemLevel, itemTexture));
 
   if (not itemsCount[itemIdStr]) then
     itemsCount[itemIdStr] = 0;
@@ -313,7 +312,6 @@ function BankHelperAddItem(itemId, itemsCount, count)
   if (not BankHelperDatas["items"][itemIdStr]) then
     BankHelperDatas["items"][itemIdStr] = {};
     BankHelperDatas["items"][itemIdStr]["name"] = itemName;
-    -- BankHelperDatas["items"][itemIdStr]["db_link"] = string.format("https://www.nostalgeek-serveur.com/db/?item=%s", itemIdStr);
     BankHelperDatas["items"][itemIdStr]["wow_link"] = itemLink;
     BankHelperDatas["items"][itemIdStr]["texture"] = itemTexture;
     BankHelperDatas["items"][itemIdStr]["level"] = itemLevel;
@@ -400,8 +398,6 @@ function BankHelperCharacterDropDownOnLoad(level)
     UIDropDownMenu_SetWidth(120, BankHelperBankItemCharacterDropDown);
   end
 
-  -- BHPrint("BankHelperCharacterDropDownOnLoad("..level..")");
-
   -- Create the sorted character list
   if (CharactersList == nil) then
     CharactersList = {};
@@ -427,7 +423,6 @@ function BankHelperCharacterDropDownOnLoad(level)
     if (CharacterSelectedID == -1 and info.value == PlayerName) then
       CharacterSelectedID = index;
       info.checked = true;
-      -- BHPrint("Set CharacterSelectedID=" .. CharacterSelectedID);
     end
     UIDropDownMenu_AddButton(info, 1);
   end
@@ -442,8 +437,6 @@ function BankHelperUpdateItemFilter(itemNameFilter)
   local pattern;
   local characterKey = CharactersList[CharacterSelectedID]["key"];
   local characterBankItems = BankHelperDatas["players"][characterKey]["items"];
-
-  -- BHPrint("BankHelperUpdateItemFilter");
 
   if (itemNameFilter == nil) then
     if (ItemsFilter.text == nil) then
@@ -465,7 +458,6 @@ function BankHelperUpdateItemFilter(itemNameFilter)
       index = index + 1;
     end
   else
-    -- BHPrint("Filtering with \"" .. itemNameFilter .. "\"");
     ItemsFilter.text = itemNameFilter;
     ItemsFilter.items = {};
     pattern = ".*" .. string.lower(itemNameFilter) .. ".*";
@@ -491,14 +483,11 @@ function BankHelperCharacterDropDownOnSelected()
   if (this:GetID() ~= 0) then
     CharacterSelectedID = this:GetID();
   end
-
-  -- BHPrint("BankHelperCharacterDropDownOnSelected");
   -- Update item list with the filter
   BankHelperUpdateItemFilter(nil);
 end
 
 function BankHelperOnItemsDisplayedListChanged()
-  -- BHPrint("BankHelperOnItemsDisplayedListChanged");
   -- Change the UI to display the new character
   UIDropDownMenu_SetSelectedID(BankHelperBankItemCharacterDropDown, CharacterSelectedID);
   -- Reset the items scrolling
@@ -597,13 +586,10 @@ function BankHelperPopulateBankList()
     itemsCountMax = itemsOffset + numButtons - 1;
   end
 
-  -- BHPrint("itemsOffset=" .. itemsOffset .. " itemsCountMax=" .. itemsCountMax);
-
   for itemIndex = itemsOffset + 1, itemsCountMax, 1 do
     local buttonName;
     local itemName, itemLevel, itemTexture, itemColor, itemQuality;
 
-    -- BHPrint("itemIndex=" .. itemIndex .. " buttonIndex=" .. buttonIndex);
     itemIdStr = ItemsFilter.items[itemIndex].id;
     itemCount = ItemsFilter.items[itemIndex].count;
     itemName = BankHelperDatas["items"][itemIdStr]["name"];
@@ -664,7 +650,6 @@ end
 -- Mail parsing
 -- ================================================
 function BankHelperOnOpenMailFrame()
-  -- CheckInbox();
   ShowUIPanel(BankHelperUIFrame);
   BankHelperTabBarTab2:Click();
   if (MailBoxStatus == MAILBOX_CLOSE) then
@@ -777,7 +762,6 @@ function BankHelperPopulateMailList(mailBoxItems)
   else
     for i = nMails+1, MAILITEMS_TO_DISPLAY, 1 do
       local buttonMailItem = getglobal(string.format("BankHelperMailEntry%d", i));
-      -- BHPrint(string.format("BankHelperMailEntry%d", i));
       buttonMailItem:Hide();
       buttonMailItem.mailItem = nil;
     end
@@ -785,8 +769,6 @@ function BankHelperPopulateMailList(mailBoxItems)
   --
   FauxScrollFrame_Update(BankHelperMailScrollFrame, nMails, MAILITEMS_TO_DISPLAY, BANKHELPER_ITEM_SCROLLFRAME_HEIGHT);
   itemsOffset = FauxScrollFrame_GetOffset(BankHelperMailScrollFrame);
-
-  -- BHPrint(string.format("Number of saved mail info: %d", nMails));
 
   for i = 1, nMailsDisplay, 1 do
     local buttonName = string.format("BankHelperMailEntry%d", i);
@@ -978,7 +960,7 @@ function BankHelperFetchMails(source)
       end
     end -- WAIT_BAG_UPDATE
   elseif (source == "UI_ERROR_MESSAGE") then
-    BHPrint(string.format("BankHelperFetchMails(%s): END action=%s - Error message, bags full?", source, bhfmAction), 0.8, 0.8, 0.0);
+    BHPrint(string.format("BankHelperFetchMails(%s): END action=%s - Error message, bags full?", source, bhfmAction), 0.8, 0.1, 0.1);
     if (bhfmAction == "WAIT_BAG_UPDATE") then
       MailBoxStatus = MAILBOX_OPEN;
     end
