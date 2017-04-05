@@ -184,6 +184,7 @@ local function BHInitData()
   if (BankHelperDatas["version"] < 5) then
     BankHelperDatas["options"]["ignore_contributors"] = {};
     table.insert(BankHelperDatas["options"]["ignore_contributors"], "Hôtel des ventes de Stormwind");
+    table.insert(BankHelperDatas["options"]["ignore_contributors"], "Stormwind Auction House");
   end
 
   if (BANKHELPER_VAR_VERSION ~= BankHelperDatas["version"]) then
@@ -298,15 +299,9 @@ end -- BankHelperOnEvent()
 -- ================================================
 -- Bank Items
 -- ================================================
---  parsing
-function BankHelperAddItem(itemId, itemsCount, count)
+local function BankHelperAddItemDescription(itemId)
   local itemLink, itemName, itemQuality, itemLevel, itemType, itemSubtype, itemTexture;
   itemName, itemLink, itemQuality, itemLevel, itemType, itemSubtype, _, _, itemTexture = GetItemInfo(itemId);
-
-  if (not itemsCount[itemId]) then
-    itemsCount[itemId] = 0;
-    BankHelperDatas["players"][PlayerName]["numItems"] = BankHelperDatas["players"][PlayerName]["numItems"] + 1;
-  end
 
   if (not BankHelperDatas["items"][itemId]) then
     BankHelperDatas["items"][itemId] = {};
@@ -318,6 +313,18 @@ function BankHelperAddItem(itemId, itemsCount, count)
     BankHelperDatas["items"][itemId]["type"] = itemType;
     BankHelperDatas["items"][itemId]["subtype"] = itemSubtype;
   end
+end
+
+--  parsing
+local function BankHelperAddItem(itemId, itemsCount, count)
+
+  if (not itemsCount[itemId]) then
+    itemsCount[itemId] = 0;
+    BankHelperDatas["players"][PlayerName]["numItems"] = BankHelperDatas["players"][PlayerName]["numItems"] + 1;
+  end
+
+  BankHelperAddItemDescription(itemId);
+
   if (not BankHelperDatas["players"][PlayerName]["items"][itemId]) then
     BankHelperDatas["players"][PlayerName]["items"][itemId] = 0;
   end
@@ -848,6 +855,7 @@ function BankHelperGetAddItemId(listA, listB)
     LogDebug(string.format("BankHelperGetAddItemId(): Search for [%s]x%d", idB, itemInfoB.count));
     if (not listA[idB]) then
       -- found, new item
+      BankHelperAddItemDescription(idB);
       return idB;
     end
 
@@ -855,6 +863,7 @@ function BankHelperGetAddItemId(listA, listB)
       itemInfoA = listA[idA];
       if (idA == idB and itemInfoA.name == itemInfoB.name and itemInfoA.type == itemInfoB.type and itemInfoA.count ~= itemInfoB.count) then
         -- found, existing item
+        BankHelperAddItemDescription(idB);
         return idB;
       end
     end
