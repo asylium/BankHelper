@@ -5,7 +5,7 @@ end
 -- Global constants:
 BANKHELPER_ITEM_SCROLLFRAME_HEIGHT = 37;
 
-local BANKHELPER_VAR_VERSION = 4;
+local BANKHELPER_VAR_VERSION = 5;
 local BANKHELPER_DEBUG = false;
 local MAIL_ACTION_DELAY = 0.3;
 
@@ -185,6 +185,13 @@ local function BHInitData()
     BankHelperDatas["options"]["ignore_contributors"] = {};
     table.insert(BankHelperDatas["options"]["ignore_contributors"], "Hôtel des ventes de Stormwind");
     table.insert(BankHelperDatas["options"]["ignore_contributors"], "Stormwind Auction House");
+    BankHelperDatas["mouvements"] = BankHelperDatas["contribs"];
+    BankHelperDatas["options"]["mouvements_sent"] = BankHelperDatas["options"]["contrib_send"];
+    BankHelperDatas["all_mails"] = nil;
+    BankHelperDatas["contribs"] = nil;
+    BankHelperDatas["prev_contribs"] = nil;
+    BankHelperDatas["options"]["contrib_send"] = nil;
+    BankHelperDatas["version"] = 5;
   end
 
   if (BANKHELPER_VAR_VERSION ~= BankHelperDatas["version"]) then
@@ -226,10 +233,10 @@ local function BHInitData()
 
   BankHelperDatas["players"][PlayerName] = playerData;
 
-  if (BankHelperDatas["options"]["contrib_send"]) then
-    BankHelperDatas["prev_contribs"] = BankHelperDatas["contribs"];
-    BankHelperDatas["options"]["contrib_send"] = false;
-    BankHelperDatas["contribs"] = {};
+  if (BankHelperDatas["options"]["mouvements_sent"]) then
+    BankHelperDatas["old_mouvements"] = BankHelperDatas["mouvements"];
+    BankHelperDatas["options"]["mouvements_sent"] = false;
+    BankHelperDatas["mouvements"] = {};
   end
 
   MAIL_ACTION_DELAY = BankHelperDatas["options"]["mail_action_delay"];
@@ -245,6 +252,8 @@ function BankHelperOnLoad()
   this:RegisterEvent("MAIL_CLOSED");
   this:RegisterEvent("UI_ERROR_MESSAGE");
   this:RegisterEvent("BAG_UPDATE");
+  this:RegisterEvent("MAIL_SEND_SUCCESS");
+  this:RegisterEvent("MAIL_FAILED");
   BHPrint("Add-on loaded", 1.0, 0.8, 0.0);
 end -- BankHelperOnLoad()
 
@@ -288,8 +297,12 @@ function BankHelperOnEvent(event)
         LastUpdateMailboxTime = currentTime;
       end
     end
-  elseif (event == "UI_ERROR_MESSAGE" and MailBoxStatus == MAILBOX_RECOVER) then
+  elseif (MailBoxStatus == MAILBOX_RECOVER and event == "UI_ERROR_MESSAGE") then
     BankHelperFetchMails(event);
+  elseif (MailBoxStatus == MAILBOX_OPEN and event == "MAIL_SEND_SUCCESS") then
+    BankHelperOnSendMailEvent(true);
+  elseif (MailBoxStatus == MAILBOX_OPEN and event == "MAIL_FAILED") then
+    BankHelperOnSendMailEvent(false);
   end
 
   eventStack = eventStack - 1;
@@ -691,6 +704,7 @@ local function BankHelperGetHeaderInfo(index)
   mailBoxItem.packageIcon = packageIcon;
   mailBoxItem.stationeryIcon = stationeryIcon;
   mailBoxItem.sender = sender;
+  mailBoxItem.to = UnitName("player");
   mailBoxItem.subject = subject;
   mailBoxItem.money = money;
   mailBoxItem.CODAmount = CODAmount;
@@ -702,7 +716,6 @@ local function BankHelperGetHeaderInfo(index)
   mailBoxItem.canReply = canReply;
   mailBoxItem.isGM = isGM;
   mailBoxItem.canDelete = InboxItemCanDelete(index);
-  mailBoxItem.to = PlayerName;
   -- Estimate the send/receive date:
   mailBoxItem.receiveDate = time() + math.floor((daysLeft-MAILITEM_MAX_DAYS)*24.0*60.0*60.0);
 
@@ -855,7 +868,6 @@ function BankHelperGetAddItemId(listA, listB)
     LogDebug(string.format("BankHelperGetAddItemId(): Search for [%s]x%d", idB, itemInfoB.count));
     if (not listA[idB]) then
       -- found, new item
-      BankHelperAddItemDescription(idB);
       return idB;
     end
 
@@ -863,7 +875,6 @@ function BankHelperGetAddItemId(listA, listB)
       itemInfoA = listA[idA];
       if (idA == idB and itemInfoA.name == itemInfoB.name and itemInfoA.type == itemInfoB.type and itemInfoA.count ~= itemInfoB.count) then
         -- found, existing item
-        BankHelperAddItemDescription(idB);
         return idB;
       end
     end
@@ -873,7 +884,7 @@ function BankHelperGetAddItemId(listA, listB)
   return 0;
 end
 
-function BankHelperAddContrib(mailBoxItem)
+function BankHelperAddMouvement(mailBoxItem)
 
   if (not BankHelperDatas["options"]["save_contrib"]) then
     -- Do not save contributions on this account
@@ -890,28 +901,34 @@ function BankHelperAddContrib(mailBoxItem)
     end
   end
 
-  local contrib = {};
-  contrib.sender = mailBoxItem.sender;
-  contrib.to = PlayerName;
-  contrib.receiveDate = mailBoxItem.receiveDate;
-  contrib.subject = mailBoxItem.subject;
-  contrib.bodyText = mailBoxItem.bodyText;
-  contrib.CODAmount = mailBoxItem.CODAmount;
-  contrib.itemName = mailBoxItem.itemName;
-  contrib.itemCount = mailBoxItem.itemCount;
-  contrib.itemQuality = mailBoxItem.itemQuality;
-  contrib.wasReturned = mailBoxItem.wasReturned;
-  contrib.itemTexture = mailBoxItem.itemTexture;
-  contrib.texture = mailBoxItem.texture;
-  contrib.isInvoice = mailBoxItem.isInvoice;
-  contrib.mailIndex = mailBoxItem.index;
-  contrib.itemTaken = mailBoxItem.itemTaken;
-  contrib.itemId = mailBoxItem.itemId;
-  contrib.money = mailBoxItem.money;
-  -- contrib.mailBoxItem = mailBoxItem;
-  table.insert(BankHelperDatas["contribs"], contrib);
-  BHPrint(string.format("Add contribution from %s: [%d][%s]x%d", contrib.sender, contrib.itemId, contrib.itemName, contrib.itemCount));
-  return contrib;
+  local mouvement = {};
+  mouvement.sender = mailBoxItem.sender;
+  mouvement.to = mailBoxItem.to;
+  mouvement.receiveDate = mailBoxItem.receiveDate;
+  mouvement.sendDate = mailBoxItem.sendDate;
+  mouvement.subject = mailBoxItem.subject;
+  mouvement.bodyText = mailBoxItem.bodyText;
+  -- mouvement.CODAmount = mailBoxItem.CODAmount;
+  mouvement.itemName = mailBoxItem.itemName;
+  mouvement.itemCount = mailBoxItem.itemCount;
+  -- mouvement.itemQuality = mailBoxItem.itemQuality;
+  mouvement.wasReturned = mailBoxItem.wasReturned;
+  -- mouvement.itemTexture = mailBoxItem.itemTexture;
+  -- mouvement.texture = mailBoxItem.texture;
+  -- mouvement.isInvoice = mailBoxItem.isInvoice;
+  -- mouvement.mailIndex = mailBoxItem.index;
+  -- mouvement.itemTaken = mailBoxItem.itemTaken;
+  mouvement.itemId = mailBoxItem.itemId;
+  mouvement.money = mailBoxItem.money;
+  -- mouvement.mailBoxItem = mailBoxItem;
+  table.insert(BankHelperDatas["mouvements"], mouvement);
+
+  if (mouvement.itemCount > 0) then
+    BHPrint(string.format("Add contribution from %s: [%d][%s]x%d", mouvement.sender, mouvement.itemId, mouvement.itemName, mouvement.itemCount));
+  else
+    BHPrint(string.format("Send to %s: [%d][%s]x%d", mouvement.to, mouvement.itemId, mouvement.itemName, -mouvement.itemCount));
+  end
+  return mouvement;
 end
 
 local bhfmAction = "NONE"; -- WAIT_READ / NEXT_MAIL / DELETE / GET_ITEM
@@ -919,7 +936,7 @@ local bhfmMailBoxItem = nil;
 local bhfmWaitDelay = 0;
 function BankHelperFetchMails(source)
   local function isContribMail(mbi)
-    return (mbi.hasItem and ((not mbi.CODAmount) or mbi.CODAmount == 0) and (not mbi.isGM));
+    return (mbi.hasItem and ((not mbi.CODAmount) or mbi.CODAmount == 0) and (not mbi.isGM) and (not mbi.isInvoice));
   end
 
   LogDebug(string.format("BankHelperFetchMails(%s): BEGIN action=%s", source, bhfmAction), 0.8, 0.8, 0.0);
@@ -1066,17 +1083,100 @@ function BankHelperOnUpdate(elapse)
 
   elseif (bhfmAction == "WAIT_TIMER_DO_NEXT_MAIL") then
     if (bhfmMailBoxItem.itemTaken == false) then
+      local itemId;
       bhfmMailBoxItem.itemTaken = true;
       bhfmMailBoxItem.itemsBagsPostTake = BankHelperGetBagsItemsList();
-      bhfmMailBoxItem.itemId = BankHelperGetAddItemId(bhfmMailBoxItem.itemsBagsPreTake, bhfmMailBoxItem.itemsBagsPostTake);
-      if (bhfmMailBoxItem.itemId == 0) then
+      itemId = BankHelperGetAddItemId(bhfmMailBoxItem.itemsBagsPreTake, bhfmMailBoxItem.itemsBagsPostTake);
+      bhfmMailBoxItem.itemId = itemId;
+      -- Update the player's items count:
+      if (itemId == 0) then
         BHPrint(string.format("Item ID for %s not found", bhfmMailBoxItem.itemName), 1.0, 0.1, 0.8);
+      else
+        BankHelperAddItemDescription(itemId);
+        local count = 0;
+        if (not BankHelperDatas["players"][PlayerName]["items"][itemId]) then
+          BankHelperDatas["players"][PlayerName]["items"][itemId] = 0;
+        else
+          count = BankHelperDatas["players"][PlayerName]["items"][itemId];
+        end
+        count = count + bhfmMailBoxItem.itemCount;
+        BankHelperDatas["players"][PlayerName]["items"][itemId] = count;
       end
-      BankHelperAddContrib(bhfmMailBoxItem);
+      -- Add the contribution:
+      BankHelperAddMouvement(bhfmMailBoxItem);
     end
 
     bhfmMailBoxItem = nil;
     bhfmAction = "NONE";
     BankHelperFetchMails("DO_NEXT_MAIL");
   end
+end
+
+-- ================================================
+-- Record send mail
+-- ================================================
+local BankHelperSendMailInfos = {};
+local BH_BlizzPickupContainerItem = PickupContainerItem;
+local function BankHeperPickupContainerItem(bag, slot)
+  BH_BlizzPickupContainerItem(bag, slot);
+  if (MailBoxStatus == MAILBOX_OPEN) then
+    local itemLink = GetContainerItemLink(bag, slot);
+    BankHelperSendMailInfos.itemLink = itemLink;
+    BankHelperSendMailInfos.itemId = GetItemID(itemLink);
+    BankHelperSendMailInfos.money = 0; -- FIXME
+    LogDebug("BankHeperPickupContainerItem");
+  end
+end
+PickupContainerItem = BankHeperPickupContainerItem;
+
+local BH_BlizzClickSendMailItemButton = ClickSendMailItemButton;
+local function BankHelperClickSendMailItemButton()
+  BH_BlizzClickSendMailItemButton();
+  if (MailBoxStatus == MAILBOX_OPEN) then
+    local name, texture, count, quality = GetSendMailItem();
+    BankHelperSendMailInfos.itemName = name;
+    BankHelperSendMailInfos.itemTexture = texture;
+    BankHelperSendMailInfos.itemCount = count;
+    BankHelperSendMailInfos.itemQuality = quality;
+    LogDebug(string.format("BankHelperClickSendMailItemButton: [%s]x%d", name, count));
+  end
+end
+ClickSendMailItemButton = BankHelperClickSendMailItemButton;
+
+local BH_BlizzSendMail = SendMail;
+local function BankHelperSendMail(recipient, subject, body)
+  BH_BlizzSendMail(recipient, subject, body);
+  if (MailBoxStatus == MAILBOX_OPEN) then
+    BankHelperSendMailInfos.to = recipient;
+    BankHelperSendMailInfos.subject = subject;
+    BankHelperSendMailInfos.bodyText = body;
+    BankHelperSendMailInfos.sender = UnitName("player");
+    BankHelperSendMailInfos.sendDate = time();
+    LogDebug(string.format("BankHelperSendMail(%s, %s, %s)", recipient, subject, body));
+  end
+end
+SendMail = BankHelperSendMail;
+
+function BankHelperOnSendMailEvent(mailSent)
+  if (mailSent and BankHelperSendMailInfos.itemName) then
+    local itemId = BankHelperSendMailInfos.itemId;
+    local itemName = BankHelperSendMailInfos.itemName;
+    local itemCount = BankHelperSendMailInfos.itemCount;
+
+    if (not BankHelperDatas["players"][PlayerName]["items"][itemId]) then
+      BankHelperDatas["players"][PlayerName]["items"][itemId] = 0;
+      BHPrint(string.format("L'item %s n'était pas présent dans les sacs, pensez à ouvrir la banque!", itemName), 1.0, 1.0, 0.0);
+    end
+
+    itemCount = BankHelperDatas["players"][PlayerName]["items"][itemId] - itemCount;
+    if (itemCount < 0) then
+      BHPrint(string.format("L'item %s n'était pas en quantité suffisante dans les sacs, pensez à ouvrir la banque!", itemName), 1.0, 1.0, 0.0);
+      itemCount = 0;
+    end
+
+    BankHelperDatas["players"][PlayerName]["items"][itemId] = itemCount;
+    BankHelperAddItemDescription(itemId);
+    BankHelperAddMouvement(BankHelperSendMailInfos);
+  end
+  BankHelperSendMailInfos = {};
 end
