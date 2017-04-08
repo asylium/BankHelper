@@ -923,10 +923,10 @@ function BankHelperAddMouvement(mailBoxItem)
   -- mouvement.mailBoxItem = mailBoxItem;
   table.insert(BankHelperDatas["mouvements"], mouvement);
 
-  if (mouvement.itemCount > 0) then
+  if (mouvement.receiveDate) then
     BHPrint(string.format("Add contribution from %s: [%d][%s]x%d", mouvement.sender, mouvement.itemId, mouvement.itemName, mouvement.itemCount));
   else
-    BHPrint(string.format("Send to %s: [%d][%s]x%d", mouvement.to, mouvement.itemId, mouvement.itemName, -mouvement.itemCount));
+    BHPrint(string.format("Send to %s: [%d][%s]x%d", mouvement.to, mouvement.itemId, mouvement.itemName, mouvement.itemCount));
   end
   return mouvement;
 end
