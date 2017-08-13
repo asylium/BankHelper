@@ -949,7 +949,7 @@ function BankHelperAddMouvement(mailBoxItem)
   if (mouvement.receiveDate) then
     msgInfo = string.format("Add contribution from %s:", mouvement.sender);
   else
-    msgInfo = string.format("Send to %s:", mouvement.sender);
+    msgInfo = string.format("Send to %s:", mouvement.to);
   end
 
   if (mouvement.itemName) then
@@ -964,7 +964,7 @@ function BankHelperAddMouvement(mailBoxItem)
 
   BHPrint(msgInfo);
 
-  if (mouvement.bodyText) then
+  if (mouvement.bodyText and mouvement.bodyText ~= "") then
     BHPrint(mouvement.subject, 0.0, 0.7, 0.1);
     BHPrint(mouvement.bodyText, 0.1, 0.9, 0.3);
   end
