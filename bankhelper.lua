@@ -1270,6 +1270,10 @@ function BankHelperOnSendMailEvent(mailSent)
     BankHelperSendMailInfos.money = 0;
   end
 
+  if (not BankHelperSendMailInfos.itemCount) then
+    BankHelperSendMailInfos.itemCount = 0;
+  end
+
   if (BankHelperSendMailInfos.itemName) then
     local itemId = BankHelperSendMailInfos.itemId;
     local itemName = BankHelperSendMailInfos.itemName;
