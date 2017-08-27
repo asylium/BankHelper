@@ -452,15 +452,23 @@ function BankHelperCharacterDropDownOnLoad(level)
     table.sort(CharactersList, BankHelperCharacterSort);
   end
 
+  -- Create the "All Characters"
+  info         = {};
+  info.text    = BH_ALL_CHAR;
+  info.value   = "all";
+  info.func    = BankHelperCharacterDropDownOnSelected;
+  info.checked = false;
+  UIDropDownMenu_AddButton(info, 1);
+
   nCharacters = table.getn(CharactersList);
   for index = 1, nCharacters, 1 do
     info         = {};
     info.text    = CharactersList[index]["name"];
     info.value   = CharactersList[index]["key"];
     info.func    = BankHelperCharacterDropDownOnSelected;
-    info.checked = nil;
+    info.checked = false;
     if (CharacterSelectedID == -1 and info.value == PlayerName) then
-      CharacterSelectedID = index;
+      CharacterSelectedID = index + 1;
       info.checked = true;
     end
     UIDropDownMenu_AddButton(info, 1);
@@ -474,8 +482,32 @@ function BankHelperUpdateItemFilter(itemNameFilter)
   local index = 1;
   local itemIdStr, itemCount, itemName;
   local pattern;
-  local characterKey = CharactersList[CharacterSelectedID]["key"];
-  local characterBankItems = BankHelperDatas["players"][characterKey]["items"];
+  local characterKey, characterData, characterBankItems, characterNumBankItems;
+  local itemsOwners = nil;
+
+  if (CharacterSelectedID > 1) then
+    -- Specific character selected
+    characterKey = CharactersList[CharacterSelectedID - 1]["key"];
+    characterBankItems = BankHelperDatas["players"][characterKey]["items"];
+    characterNumBankItems = BankHelperDatas["players"][characterKey]["numItems"];
+  else
+    -- Display all characters items
+    itemsOwners = {};
+    characterBankItems = {};
+    characterNumBankItems = 0;
+    for characterKey, characterData in BankHelperDatas["players"] do
+      for itemIdStr, itemCount in characterData["items"] do
+        if (characterBankItems[itemIdStr]) then
+          characterBankItems[itemIdStr] = characterBankItems[itemIdStr] + itemCount;
+          itemsOwners[itemIdStr] = itemsOwners[itemIdStr] .. ", " .. characterData["name"];
+        else
+          characterBankItems[itemIdStr] = itemCount;
+          characterNumBankItems = characterNumBankItems + 1;
+          itemsOwners[itemIdStr] = characterData["name"];
+        end
+      end
+    end
+  end
 
   if (itemNameFilter == nil) then
     if (ItemsFilter.text == nil) then
@@ -487,12 +519,15 @@ function BankHelperUpdateItemFilter(itemNameFilter)
 
   if (itemNameFilter == "") then
     ItemsFilter.text  = nil;
-    ItemsFilter.count = BankHelperDatas["players"][characterKey]["numItems"];
+    ItemsFilter.count = characterNumBankItems;
     ItemsFilter.items = {};
     for itemIdStr, itemCount in characterBankItems do
       local infos = {};
       infos.id = itemIdStr;
       infos.count = itemCount;
+      if (itemsOwners) then
+        infos.owners = itemsOwners[itemIdStr];
+      end
       ItemsFilter.items[index] = infos;
       index = index + 1;
     end
@@ -596,7 +631,7 @@ function BankHelperOnSortBankItem(sortColumn)
 end
 
 function BankHelperPopulateBankList()
-  local itemIdStr, itemCount;
+  local itemIdStr, itemCount, itemOwners;
   local numButtons = 0;
   local itemsIndex = 1;
   local buttonIndex = 1;
@@ -631,6 +666,7 @@ function BankHelperPopulateBankList()
 
     itemIdStr = ItemsFilter.items[itemIndex].id;
     itemCount = ItemsFilter.items[itemIndex].count;
+    itemOwners = ItemsFilter.items[itemIndex].owners;
     itemName = BankHelperDatas["items"][itemIdStr]["name"];
     itemLevel = BankHelperDatas["items"][itemIdStr]["level"];
     itemTexture = BankHelperDatas["items"][itemIdStr]["texture"];
@@ -667,6 +703,12 @@ function BankHelperPopulateBankList()
     getglobal(buttonName .. "Quality"):SetText(BH_QUALITY[itemQuality]);
     getglobal(buttonName .. "Count"):SetText(itemCount);
     getglobal(buttonName .. "Level"):SetText(itemLevel);
+
+    if (CharacterSelectedID > 1) then
+      getglobal(buttonName .. "Owners"):SetText("");
+    else
+      getglobal(buttonName .. "Owners"):SetText(itemOwners);
+    end
 
     buttonIndex = buttonIndex + 1;
   end

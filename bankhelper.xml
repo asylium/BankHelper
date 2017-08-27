@@ -40,7 +40,19 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
           <Anchors>
             <Anchor point="LEFT" relativeTo="$parentIconTexture" relativePoint="RIGHT">
               <Offset>
-                <AbsDimension x="6" y="0"/>
+                <AbsDimension x="6" y="12"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </FontString>
+        <FontString name="$parentOwners" inherits="GameFontNormalSmall" justifyH="LEFT">
+          <Size>
+            <AbsDimension x="240" y="14"/>
+          </Size>
+          <Anchors>
+            <Anchor point="LEFT" relativeTo="$parentIconTexture" relativePoint="RIGHT">
+              <Offset>
+                <AbsDimension x="6" y="-2"/>
               </Offset>
             </Anchor>
           </Anchors>

@@ -8,6 +8,8 @@ BINDING_HEADER_BH_UIBINDS= "Bank Helper";
 BH_DAYS_NAME = {"Sunday", "Monday", "Thuesday", "Wesnesday", "Thursday", "Friday", "Saturday"};
 BH_WEEK_THURSDAY = 4;
 
+BH_ALL_CHAR = "All Char";
+
 BH_UI_LEVEL = "Lvl";
 BH_UI_QUANTITY = "Ct";
 BH_UI_TAB_BANK = "Bank";

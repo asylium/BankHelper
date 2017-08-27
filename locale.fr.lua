@@ -9,6 +9,8 @@ if (GetLocale() == "frFR") then
   BH_DAYS_NAME = {"Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"};
   BH_WEEK_THURSDAY = 3;
 
+  BH_ALL_CHAR = "Tous";
+
   BH_UI_LEVEL = "Niv";
   BH_UI_QUANTITY = "Nb";
   BH_UI_TAB_BANK = "Banque";
